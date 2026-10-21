@@ -63,18 +63,25 @@ public class MainActivity extends Activity {
 
     private final ExecutorService runner = Executors.newSingleThreadExecutor();
     private EditText editor;
+    private EditorCompletionPopup completions;
+    private String filename = "main.py";
+    private View sidebar, workspace, consolePane, fileDivider;
+    private LinearLayout editorArea;
+    private final Runnable completionTask = () -> {
+        if (completions == null) return;
+        if (filename.endsWith(".py") && editorArea.getVisibility() == View.VISIBLE)
+            completions.update();
+        else completions.dismiss();
+    };
     private TextView filenameView, breadcrumbView, outputView, consoleState, cursorView, runButton, lineNumbers;
     private TextView folderLabel, commandCenter;
     private LinearLayout fileList;
-    private View sidebar, workspace, consolePane, fileDivider;
     private CodeMinimapView minimap;
-    private LinearLayout editorArea;
     private View fileRailIcon, terminalRailIcon;
     private final ArrayList<String> history = new ArrayList<>();
     private int historyIndex = -1;
     private boolean compact;
     private File scriptsDir;
-    private String filename = "main.py";
     private byte[] loadedHash;
     private String currentFolder = "";
     private WorkspaceFiles workspaceFiles;
@@ -570,6 +577,7 @@ public class MainActivity extends Activity {
         codeRow.addView(lineNumbers, size(dp(57), -1));
         EditorEditText code = new EditorEditText(this);
         editor = code;
+        completions = new EditorCompletionPopup(this, code);
         editor.setGravity(Gravity.TOP | Gravity.START);
         editor.setTextSize(15);
         editor.setTextColor(TEXT);
@@ -587,8 +595,13 @@ public class MainActivity extends Activity {
         editor.setOnScrollChangeListener((view, x, y, oldX, oldY) -> {
             lineNumbers.scrollTo(0, y);
             if (minimap != null) minimap.invalidate();
+            if (completions != null) completions.dismiss();
         });
-        code.setSelectionListener(this::updateCursor);
+        code.setSelectionListener(() -> { updateCursor(); scheduleCompletion(); });
+        code.setCompletionKeyListener((keyCode, event) -> completions.onKey(keyCode, event));
+        code.setOnFocusChangeListener((view, hasFocus) -> {
+            if (!hasFocus) completions.dismiss();
+        });
         editor.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
@@ -598,6 +611,7 @@ public class MainActivity extends Activity {
                 PythonHighlighter.apply(s);
                 if (minimap != null) minimap.setSource(s.toString());
                 updateCursor();
+                scheduleCompletion();
             }
         });
         codeRow.addView(editor, new LinearLayout.LayoutParams(0, -1, 1));
@@ -748,6 +762,12 @@ public class MainActivity extends Activity {
             if (source.charAt(i) == '\n') { line++; lastBreak = i; }
         }
         cursorView.setText("行 " + line + "，列 " + (position - lastBreak));
+    }
+
+    private void scheduleCompletion() {
+        if (editor == null || completions == null || completions.isInserting()) return;
+        editor.removeCallbacks(completionTask);
+        editor.postDelayed(completionTask, 120);
     }
 
     private TextView action(LinearLayout parent, String title, boolean primary, View.OnClickListener click) {
@@ -1024,6 +1044,7 @@ public class MainActivity extends Activity {
 
     private void loadScript(String name, boolean record) {
         try {
+            if (completions != null) completions.dismiss();
             byte[] bytes;
             if (workspaceFiles == null) bytes = Files.readAllBytes(scriptFile(name).toPath());
             else {
@@ -1160,5 +1181,14 @@ public class MainActivity extends Activity {
                 .setMessage(message).setPositiveButton("确定", null).show();
     }
 
-    @Override protected void onDestroy() { runner.shutdown(); super.onDestroy(); }
+    @Override protected void onPause() {
+        if (completions != null) completions.dismiss();
+        super.onPause();
+    }
+
+    @Override protected void onDestroy() {
+        editor.removeCallbacks(completionTask);
+        runner.shutdown();
+        super.onDestroy();
+    }
 }

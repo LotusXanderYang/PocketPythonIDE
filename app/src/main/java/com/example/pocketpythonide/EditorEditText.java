@@ -5,11 +5,13 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.text.Layout;
+import android.view.KeyEvent;
 import android.widget.EditText;
 
 /** Reports caret movement from touch and hardware keyboards to the status bar. */
 public class EditorEditText extends EditText {
     private Runnable selectionListener;
+    private CompletionKeyListener completionKeyListener;
     private final Paint linePaint = new Paint();
 
     public EditorEditText(Context context) {
@@ -18,6 +20,17 @@ public class EditorEditText extends EditText {
     }
 
     public void setSelectionListener(Runnable listener) { selectionListener = listener; }
+
+    interface CompletionKeyListener { boolean onKey(int keyCode, KeyEvent event); }
+
+    public void setCompletionKeyListener(CompletionKeyListener listener) {
+        completionKeyListener = listener;
+    }
+
+    @Override public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (completionKeyListener != null && completionKeyListener.onKey(keyCode, event)) return true;
+        return super.onKeyDown(keyCode, event);
+    }
 
     @Override protected void onSelectionChanged(int start, int end) {
         super.onSelectionChanged(start, end);
