@@ -1078,6 +1078,11 @@ public class MainActivity extends Activity {
             byte[] bytes = editor.getText().toString().getBytes(StandardCharsets.UTF_8);
             if (workspaceFiles == null) Files.write(scriptFile(filename).toPath(), bytes);
             else {
+                // Opening a new file should not rewrite the unchanged current document.
+                if (loadedHash != null && Arrays.equals(loadedHash, hash(bytes))) {
+                    if (notify) Toast.makeText(this, "没有未保存的更改", Toast.LENGTH_SHORT).show();
+                    return true;
+                }
                 WorkspaceFiles.Entry entry = workspaceFiles.find(filename);
                 if (entry == null) throw new IOException("文件已从工作区移除");
                 if (loadedHash != null && !Arrays.equals(loadedHash,

@@ -96,28 +96,30 @@ final class WorkspaceFiles {
     }
 
     private List<Entry> children(Uri parent, String prefix) throws IOException {
-        Uri listing = DocumentsContract.buildChildDocumentsUriUsingTree(tree,
-                DocumentsContract.getDocumentId(parent));
         ArrayList<Entry> result = new ArrayList<>();
         String[] columns = {DocumentsContract.Document.COLUMN_DOCUMENT_ID,
                 DocumentsContract.Document.COLUMN_DISPLAY_NAME,
                 DocumentsContract.Document.COLUMN_MIME_TYPE,
                 DocumentsContract.Document.COLUMN_SIZE};
-        try (Cursor cursor = resolver.query(listing, columns, null, null, null)) {
-            if (cursor == null) throw new IOException("文档提供者无法列出文件夹");
-            while (cursor.moveToNext()) {
-                String id = cursor.getString(0);
-                String childName = cursor.getString(1);
-                String mime = cursor.getString(2);
-                if (childName == null || childName.isEmpty() || childName.contains("/")
-                        || childName.equals(".") || childName.equals("..")) continue;
-                Uri uri = DocumentsContract.buildDocumentUriUsingTree(tree, id);
-                long size = cursor.isNull(3) ? -1 : cursor.getLong(3);
-                result.add(new Entry(prefix.isEmpty() ? childName : prefix + "/" + childName,
-                        uri, DocumentsContract.Document.MIME_TYPE_DIR.equals(mime), size));
+        try {
+            Uri listing = DocumentsContract.buildChildDocumentsUriUsingTree(tree,
+                    DocumentsContract.getDocumentId(parent));
+            try (Cursor cursor = resolver.query(listing, columns, null, null, null)) {
+                if (cursor == null) throw new IOException("文档提供者无法列出文件夹");
+                while (cursor.moveToNext()) {
+                    String id = cursor.getString(0);
+                    String childName = cursor.getString(1);
+                    String mime = cursor.getString(2);
+                    if (childName == null || childName.isEmpty() || childName.contains("/")
+                            || childName.equals(".") || childName.equals("..")) continue;
+                    Uri uri = DocumentsContract.buildDocumentUriUsingTree(tree, id);
+                    long size = cursor.isNull(3) ? -1 : cursor.getLong(3);
+                    result.add(new Entry(prefix.isEmpty() ? childName : prefix + "/" + childName,
+                            uri, DocumentsContract.Document.MIME_TYPE_DIR.equals(mime), size));
+                }
             }
-        } catch (SecurityException e) {
-            throw new IOException("工作区授权已失效，请重新打开文件夹", e);
+        } catch (RuntimeException e) {
+            throw providerError("列出文件夹", e);
         }
         return result;
     }
@@ -153,7 +155,7 @@ final class WorkspaceFiles {
             String actualName = queryName(uri);
             String actualPath = parentPath.isEmpty() ? actualName : parentPath + "/" + actualName;
             return new Entry(actualPath, uri, directory, 0);
-        } catch (SecurityException e) { throw new IOException("没有写入工作区的权限", e); }
+        } catch (RuntimeException e) { throw providerError("创建文件", e); }
     }
 
     byte[] read(Entry entry, int limit) throws IOException {
@@ -169,7 +171,7 @@ final class WorkspaceFiles {
                 out.write(buffer, 0, n);
             }
             return out.toByteArray();
-        } catch (SecurityException e) { throw new IOException("没有读取文件的权限", e); }
+        } catch (RuntimeException e) { throw providerError("读取文件", e); }
     }
 
     void write(Entry entry, byte[] bytes) throws IOException {
@@ -177,7 +179,7 @@ final class WorkspaceFiles {
         try (OutputStream out = resolver.openOutputStream(entry.uri, "wt")) {
             if (out == null) throw new IOException("无法写入文件");
             out.write(bytes);
-        } catch (SecurityException e) { throw new IOException("没有写入文件的权限", e); }
+        } catch (RuntimeException e) { throw providerError("写入文件", e); }
     }
 
     Snapshot copyToMirror(File mirror) throws IOException {
@@ -347,16 +349,26 @@ final class WorkspaceFiles {
     }
 
     private static String mimeType(String name) {
-        if (name.endsWith(".py")) return "text/x-python";
+        // Some Android/Harmony document providers reject nonstandard Python MIME types.
+        if (name.endsWith(".py") || name.endsWith(".pyi")) return "text/plain";
         String guessed = java.net.URLConnection.guessContentTypeFromName(name);
         return guessed == null ? "application/octet-stream" : guessed;
+    }
+
+    private static IOException providerError(String operation, RuntimeException cause) {
+        String detail = cause.getMessage();
+        String type = cause.getClass().getSimpleName();
+        return new IOException("文档提供者无法" + operation + "（" + type + "）"
+                + (detail == null || detail.isEmpty() ? "" : "：" + detail), cause);
     }
 
     private String queryName(Uri uri) throws IOException {
         try (Cursor cursor = resolver.query(uri,
                 new String[]{DocumentsContract.Document.COLUMN_DISPLAY_NAME}, null, null, null)) {
             if (cursor == null || !cursor.moveToFirst()) throw new IOException("无法访问所选文件夹");
-            return cursor.getString(0);
-        } catch (SecurityException e) { throw new IOException("文件夹授权已失效", e); }
+            String displayName = cursor.getString(0);
+            if (displayName == null || displayName.isEmpty()) throw new IOException("文档提供者未返回文件名称");
+            return displayName;
+        } catch (RuntimeException e) { throw providerError("读取文件名称", e); }
     }
 }
