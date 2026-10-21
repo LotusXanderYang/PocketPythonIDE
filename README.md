@@ -1,4 +1,4 @@
-# PocketPythonIDE · 0.1.0 Beta
+# PocketPythonIDE · 0.1.1 Beta
 
 面向 Android 平板的离线 Python IDE。内置 ARM64 版 **CPython 3.14.6、PyTorch 2.14.1（CPU）和 NumPy 2.5.4**，在设备本地执行脚本。界面采用深色工作区、文件侧栏、标签页、代码小地图和底部输出面板；应用标志与图标由本项目设计。
 
@@ -6,13 +6,14 @@
 
 ## 下载
 
-从 [v0.1.0-beta.1 测试版](https://github.com/LotusXanderYang/PocketPythonIDE/releases/tag/v0.1.0-beta.1) 下载 APK。它是调试签名的测试构建，适合在自己的设备上试用。首次打开 Python 环境时，应用会核对内置运行时的 SHA-256 并解包；后续运行直接使用已解包内容。
+从 [v0.1.1-beta.1 测试版](https://github.com/LotusXanderYang/PocketPythonIDE/releases/tag/v0.1.1-beta.1) 下载 APK。它是调试签名的测试构建，适合在自己的设备上试用。首次打开 Python 环境时，应用会核对内置运行时的 SHA-256 并解包；后续运行直接使用已解包内容。
 
 APK 的 Python/PyTorch 运行时约 165 MB。为避免将大文件写入 Git 历史，`runtime.zip` 放在同一 Release 的附件中，仓库保留 [哈希与依赖清单](app/src/main/assets/runtime.json)。
 
 ## 功能
 
-- 新建、打开、编辑、保存和运行应用内部的 `.py` 文件；脚本位于应用私有的 `files/scripts` 目录。
+- 在“文件 → 打开文件夹”中选择 Android 文档提供者里的文件夹，授予持久读写权限，将其作为工作区。资源管理器显示嵌套目录与文件，可新建文件、文件夹，编辑并保存常见文本文件。关闭文件夹后仍可使用应用内部的 `files/scripts` 目录。
+- 运行工作区内的 `.py` 文件时，IDE 将项目复制到应用私有运行目录，支持同目录模块、包和项目根目录导入；执行后将新增或修改的文件写回所选文件夹。若外部文件同时发生变化，IDE 跳过覆盖并在输出面板报告冲突。
 - 行号、基础语法着色、当前行提示、小地图、资源管理器和运行输出面板。
 - 实体键盘支持 `Ctrl+S` 保存，`Ctrl+Enter` 或 `F5` 运行。
 - “环境自检”在设备本地检查 PyTorch 导入、矩阵乘法、自动求导、NumPy 桥接及文件读写。
@@ -46,7 +47,9 @@ cd PocketPythonIDE
 python .\tools\verify-device-runtime.py --serial <ADB设备序列号> --expect-python 3.14.6 --expect-torch 2.14.1
 ```
 
-目前仅在 4 KB 内存页实机上运行过；16 KB 对齐通过静态审计，还需要 16 KB 内存页设备实测。运行时是在应用进程内执行的 CPU 版 CPython/PyTorch，耗时脚本与原生扩展故障可能影响 IDE 进程。
+0.1.1 的文件夹工作区功能已完成编译验证，尚未在实机上验证文件选择器和跨文件导入。此前的 Python/PyTorch 实机结果来自 0.1.0 构建。目前仅在 4 KB 内存页实机上运行过；16 KB 对齐通过静态审计，还需要 16 KB 内存页设备实测。运行时是在应用进程内执行的 CPU 版 CPython/PyTorch，耗时脚本与原生扩展故障可能影响 IDE 进程。
+
+工作区通过 Android 的文档访问框架访问，不能把 `content://` 路径直接交给 CPython。运行副本当前最多 2000 项、单文件 256 MB、总计 512 MB；编辑器只打开不超过 2 MB 的常见文本文件。`.git`、虚拟环境、构建目录和 Python 缓存不会复制。脚本创建的空文件夹和删除操作暂不回写，支持的文件修改与新增会回写；写回失败时应用会保留私有运行副本并报告错误。若脚本改写了当前打开的文件，请重新打开它查看结果。云盘提供者的速度与离线可用性取决于其自身实现。
 
 ## 代码与许可证
 
@@ -56,5 +59,4 @@ python .\tools\verify-device-runtime.py --serial <ADB设备序列号> --expect-p
 
 ---
 
-**English:** PocketPythonIDE is an experimental, offline Android tablet IDE bundling CPython 3.14.6, CPU PyTorch 2.14.1, and NumPy 2.5.4 for ARM64. Download the beta APK from Releases, or fetch the pinned runtime asset and run `build-local.ps1`. The app source is MIT licensed; bundled dependencies retain their own licenses.
-
+**English:** PocketPythonIDE is an experimental Android tablet IDE bundling CPython 3.14.6, CPU PyTorch 2.14.1, and NumPy 2.5.4 for ARM64. Version 0.1.1 adds a persistent Android document-tree workspace with nested files and cross-file imports. Download the beta APK from Releases, or fetch the pinned runtime asset and run `build-local.ps1`. The app source is MIT licensed; bundled dependencies retain their own licenses.

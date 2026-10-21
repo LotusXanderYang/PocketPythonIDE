@@ -2,10 +2,12 @@ package com.example.pocketpythonide;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
+import android.net.Uri;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.TypedValue;
@@ -26,8 +28,13 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -41,6 +48,8 @@ public class MainActivity extends Activity {
     private static final int TEXT = Color.rgb(220, 220, 220);
     private static final int MUTED = Color.rgb(143, 143, 143);
     private static final int ACCENT = Color.rgb(0, 122, 204);
+    private static final int OPEN_FOLDER_REQUEST = 501;
+    private static final String WORKSPACE_PREF = "workspace_tree_uri";
     private static final String STARTER = "import torch\n\n"
             + "print('torch:', torch.__version__)\n"
             + "x = torch.tensor([[1.0, 2.0], [3.0, 4.0]])\n"
@@ -55,6 +64,7 @@ public class MainActivity extends Activity {
     private final ExecutorService runner = Executors.newSingleThreadExecutor();
     private EditText editor;
     private TextView filenameView, breadcrumbView, outputView, consoleState, cursorView, runButton, lineNumbers;
+    private TextView folderLabel, commandCenter;
     private LinearLayout fileList;
     private View sidebar, workspace, consolePane, fileDivider;
     private CodeMinimapView minimap;
@@ -65,6 +75,10 @@ public class MainActivity extends Activity {
     private boolean compact;
     private File scriptsDir;
     private String filename = "main.py";
+    private byte[] loadedHash;
+    private String currentFolder = "";
+    private WorkspaceFiles workspaceFiles;
+    private final Set<String> expandedFolders = new HashSet<>();
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
@@ -75,6 +89,16 @@ public class MainActivity extends Activity {
         scriptsDir = new File(getFilesDir(), "scripts");
         if (!scriptsDir.exists() && !scriptsDir.mkdirs())
             Toast.makeText(this, "无法创建脚本目录", Toast.LENGTH_LONG).show();
+        String savedTree = getPreferences(MODE_PRIVATE).getString(WORKSPACE_PREF, null);
+        if (savedTree != null) {
+            try {
+                workspaceFiles = new WorkspaceFiles(this, Uri.parse(savedTree));
+                filename = "";
+            } catch (Exception e) {
+                getPreferences(MODE_PRIVATE).edit().remove(WORKSPACE_PREF).apply();
+                Toast.makeText(this, "工作区授权已失效，请重新打开文件夹", Toast.LENGTH_LONG).show();
+            }
+        }
         buildUi();
         File starter = scriptFile("main.py");
         if (!starter.exists()) {
@@ -91,9 +115,26 @@ public class MainActivity extends Activity {
                             .getBytes(StandardCharsets.UTF_8));
             } catch (IOException e) { showError("无法检查示例脚本：" + e.getMessage()); }
         }
-        String initial = state == null ? "main.py" : state.getString("filename", "main.py");
-        if (!scriptFile(initial).exists()) initial = "main.py";
-        loadScript(initial);
+        String initial = state == null ? filename : state.getString("filename", filename);
+        if (workspaceFiles != null) {
+            try {
+                WorkspaceFiles.Entry entry = workspaceFiles.find(initial);
+                if (entry == null || entry.directory || !editableFile(initial)) {
+                    initial = "";
+                    for (WorkspaceFiles.Entry candidate : workspaceFiles.listTree()) {
+                        if (!candidate.directory && candidate.path.endsWith(".py")) {
+                            initial = candidate.path;
+                            break;
+                        }
+                    }
+                }
+                if (!initial.isEmpty()) loadScript(initial);
+                else { filename = ""; editorArea.setVisibility(View.INVISIBLE); updateFilename(); }
+            } catch (IOException e) { showError("工作区加载失败：" + e.getMessage()); }
+        } else {
+            if (!scriptFile(initial).exists()) initial = "main.py";
+            loadScript(initial);
+        }
         if (state != null) {
             editor.setText(state.getString("source", editor.getText().toString()));
             editor.setSelection(Math.min(state.getInt("selection", 0), editor.length()));
@@ -163,7 +204,7 @@ public class MainActivity extends Activity {
         logoSize.leftMargin = dp(10);
         logoSize.rightMargin = dp(8);
         bar.addView(logo, logoSize);
-        topMenu(bar, "文件(F)", "新建脚本", "打开脚本", "保存脚本");
+        topMenu(bar, "文件(F)", "新建脚本", "新建文件夹", "打开脚本", "打开文件夹", "关闭文件夹", "保存脚本");
         topMenu(bar, "编辑(E)", "全选", "剪切", "复制", "粘贴");
         if (!compact) {
             topMenu(bar, "选择(S)", "全选", "跳转到行");
@@ -179,7 +220,7 @@ public class MainActivity extends Activity {
             bar.addView(back, size(dp(30), -1));
             bar.addView(forward, size(dp(30), -1));
         }
-        TextView commandCenter = label("⌕   scripts", 12, Color.rgb(182, 182, 182), false);
+        commandCenter = label("⌕   scripts", 12, Color.rgb(182, 182, 182), false);
         commandCenter.setGravity(Gravity.CENTER_VERTICAL);
         commandCenter.setPadding(dp(12), 0, dp(12), 0);
         GradientDrawable commandBackground = rounded(Color.rgb(49, 49, 49), 5);
@@ -224,7 +265,10 @@ public class MainActivity extends Activity {
     private void handleMenuItem(String item) {
         switch (item) {
             case "新建脚本": promptNew(); break;
+            case "新建文件夹": promptNewFolder(); break;
             case "打开脚本": promptOpen(); break;
+            case "打开文件夹": openFolder(); break;
+            case "关闭文件夹": closeFolder(); break;
             case "保存脚本": saveScript(); break;
             case "全选": editor.onTextContextMenuItem(android.R.id.selectAll); break;
             case "剪切": editor.onTextContextMenuItem(android.R.id.cut); break;
@@ -436,10 +480,12 @@ public class MainActivity extends Activity {
         interactive(more, v -> {
             PopupMenu menu = new PopupMenu(this, more);
             menu.getMenu().add("新建脚本");
+            menu.getMenu().add("新建文件夹");
             menu.getMenu().add("打开脚本");
+            menu.getMenu().add("打开文件夹");
+            menu.getMenu().add("关闭文件夹");
             menu.setOnMenuItemClickListener(item -> {
-                if (item.getTitle().toString().equals("新建脚本")) promptNew();
-                else promptOpen();
+                handleMenuItem(item.getTitle().toString());
                 return true;
             });
             menu.show();
@@ -449,6 +495,7 @@ public class MainActivity extends Activity {
         LinearLayout folderRow = row(SIDEBAR);
         folderRow.setGravity(Gravity.CENTER_VERTICAL);
         TextView folder = label("⌄  scripts", 12, TEXT, true);
+        folderLabel = folder;
         folder.setPadding(dp(16), 0, 0, 0);
         folderRow.addView(folder, new LinearLayout.LayoutParams(0, -1, 1));
         TextView add = label("＋", 19, MUTED, false);
@@ -603,6 +650,47 @@ public class MainActivity extends Activity {
     private void refreshFiles() {
         if (fileList == null) return;
         fileList.removeAllViews();
+        if (workspaceFiles != null) {
+            try {
+                for (WorkspaceFiles.Entry entry : workspaceFiles.listTree()) {
+                    if (!visibleInTree(entry.path)) continue;
+                    boolean active = entry.path.equals(filename);
+                    LinearLayout itemRow = row(SIDEBAR);
+                    itemRow.setGravity(Gravity.CENTER_VERTICAL);
+                    if (active) itemRow.setBackground(rounded(Color.rgb(55, 55, 61), 4));
+                    int depth = entry.path.split("/").length - 1;
+                    String symbol = entry.directory
+                            ? (expandedFolders.contains(entry.path) ? "⌄" : "›")
+                            : (entry.path.endsWith(".py") ? "Py" : "▫");
+                    TextView icon = label(symbol, entry.directory ? 17 : 11,
+                            entry.directory ? MUTED : Color.rgb(207, 164, 83), true);
+                    icon.setGravity(Gravity.CENTER);
+                    itemRow.addView(icon, size(dp(29 + depth * 15), -1));
+                    TextView item = label(entry.name(), 12, active ? TEXT : Color.rgb(204, 204, 204),
+                            entry.directory);
+                    item.setGravity(Gravity.CENTER_VERTICAL);
+                    item.setSingleLine(true);
+                    item.setEllipsize(android.text.TextUtils.TruncateAt.END);
+                    itemRow.addView(item, new LinearLayout.LayoutParams(0, -1, 1));
+                    interactive(itemRow, v -> {
+                        if (entry.directory) {
+                            currentFolder = entry.path;
+                            if (!expandedFolders.add(entry.path)) expandedFolders.remove(entry.path);
+                            refreshFiles();
+                        } else if (!entry.path.equals(filename) && saveScript(false)) {
+                            if (editableFile(entry.path)) loadScript(entry.path);
+                            else showError("该文件不是受支持的文本类型，无法在编辑器中打开");
+                            if (compact && sidebar.getVisibility() == View.VISIBLE) toggleSidebar();
+                        }
+                    });
+                    LinearLayout.LayoutParams rowSize = size(-1, dp(31));
+                    rowSize.leftMargin = dp(7);
+                    rowSize.rightMargin = dp(7);
+                    fileList.addView(itemRow, rowSize);
+                }
+            } catch (IOException e) { showError("读取工作区失败：" + e.getMessage()); }
+            return;
+        }
         String[] names = scriptsDir.list((dir, name) -> name.endsWith(".py"));
         if (names == null) return;
         Arrays.sort(names);
@@ -629,6 +717,15 @@ public class MainActivity extends Activity {
             itemSize.rightMargin = dp(7);
             fileList.addView(row, itemSize);
         }
+    }
+
+    private boolean visibleInTree(String path) {
+        int slash = path.lastIndexOf('/');
+        while (slash >= 0) {
+            if (!expandedFolders.contains(path.substring(0, slash))) return false;
+            slash = path.lastIndexOf('/', slash - 1);
+        }
+        return true;
     }
 
     private void updateLineNumbers(CharSequence source) {
@@ -721,8 +818,14 @@ public class MainActivity extends Activity {
     }
 
     private void updateFilename() {
-        if (filenameView != null) filenameView.setText("Py  " + filename);
-        if (breadcrumbView != null) breadcrumbView.setText("Py  " + filename);
+        String shown = filename.isEmpty() ? "未打开文件" : filename;
+        if (filenameView != null) filenameView.setText("Py  " + shown);
+        if (breadcrumbView != null) breadcrumbView.setText(
+                workspaceFiles == null ? "Py  " + shown : workspaceFiles.name() + "  ›  " + shown);
+        if (folderLabel != null) folderLabel.setText("⌄  "
+                + (workspaceFiles == null ? "scripts" : workspaceFiles.name()));
+        if (commandCenter != null) commandCenter.setText("⌕   "
+                + (workspaceFiles == null ? "scripts" : workspaceFiles.name()));
     }
 
     private File scriptFile(String name) { return new File(scriptsDir, name); }
@@ -731,14 +834,152 @@ public class MainActivity extends Activity {
         return name.matches("[A-Za-z0-9_\\-]+\\.py") && name.length() <= 80;
     }
 
+    private boolean validWorkspaceName(String name) {
+        return !name.isEmpty() && !name.equals(".") && !name.equals("..")
+                && !name.contains("/") && !name.contains("\\") && name.length() <= 100;
+    }
+
+    private boolean editableFile(String path) {
+        String lower = path.toLowerCase(java.util.Locale.ROOT);
+        return lower.endsWith(".py") || lower.endsWith(".pyi") || lower.endsWith(".txt")
+                || lower.endsWith(".md") || lower.endsWith(".json") || lower.endsWith(".toml")
+                || lower.endsWith(".yaml") || lower.endsWith(".yml") || lower.endsWith(".ini")
+                || lower.endsWith(".cfg") || lower.endsWith(".csv") || lower.endsWith(".sh")
+                || lower.endsWith(".xml") || lower.endsWith(".gradle")
+                || lower.endsWith(".properties") || lower.endsWith("requirements")
+                || lower.endsWith("dockerfile") || lower.endsWith(".gitignore");
+    }
+
+    private void openFolder() {
+        if (!saveScript(false)) return;
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION
+                | Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+        if (workspaceFiles != null)
+            intent.putExtra(android.provider.DocumentsContract.EXTRA_INITIAL_URI,
+                    workspaceFiles.treeUri());
+        try { startActivityForResult(intent, OPEN_FOLDER_REQUEST); }
+        catch (android.content.ActivityNotFoundException e) {
+            showError("设备没有可用的系统文件夹选择器");
+        }
+    }
+
+    @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != OPEN_FOLDER_REQUEST || resultCode != RESULT_OK || data == null
+                || data.getData() == null) return;
+        Uri tree = data.getData();
+        int flags = data.getFlags() & (Intent.FLAG_GRANT_READ_URI_PERMISSION
+                | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        if (flags != (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION)) {
+            showError("所选文件夹没有读写授权");
+            return;
+        }
+        try {
+            getContentResolver().takePersistableUriPermission(tree, flags);
+            WorkspaceFiles next = new WorkspaceFiles(this, tree);
+            List<WorkspaceFiles.Entry> entries = next.listTree();
+            workspaceFiles = next;
+            getPreferences(MODE_PRIVATE).edit().putString(WORKSPACE_PREF, tree.toString()).apply();
+            history.clear();
+            historyIndex = -1;
+            expandedFolders.clear();
+            currentFolder = "";
+            filename = "";
+            loadedHash = null;
+            editor.setText("");
+            outputView.setText("");
+            editorArea.setVisibility(View.INVISIBLE);
+            updateFilename();
+            refreshFiles();
+            for (WorkspaceFiles.Entry entry : entries) {
+                if (!entry.directory && entry.path.endsWith(".py")) {
+                    expandParents(entry.path);
+                    loadScript(entry.path);
+                    break;
+                }
+            }
+            refreshFiles();
+            if (compact && sidebar.getVisibility() != View.VISIBLE) toggleSidebar();
+            Toast.makeText(this, "已打开工作区：" + next.name(), Toast.LENGTH_SHORT).show();
+        } catch (Exception e) { showError("打开文件夹失败：" + e.getMessage()); }
+    }
+
+    private void closeFolder() {
+        if (workspaceFiles == null) return;
+        if (!saveScript(false)) return;
+        workspaceFiles = null;
+        getPreferences(MODE_PRIVATE).edit().remove(WORKSPACE_PREF).apply();
+        history.clear();
+        historyIndex = -1;
+        expandedFolders.clear();
+        currentFolder = "";
+        loadScript("main.py");
+        updateFilename();
+        refreshFiles();
+    }
+
+    private void expandParents(String path) {
+        int slash = path.lastIndexOf('/');
+        while (slash >= 0) {
+            expandedFolders.add(path.substring(0, slash));
+            slash = path.lastIndexOf('/', slash - 1);
+        }
+    }
+
+    private void promptNewFolder() {
+        if (workspaceFiles == null) {
+            showError("请先通过“文件 → 打开文件夹”选择工作区");
+            return;
+        }
+        EditText input = new EditText(this);
+        input.setSingleLine(true);
+        input.setHint("文件夹名称");
+        new AlertDialog.Builder(this).setTitle("在 " + workspaceFiles.name()
+                + (currentFolder.isEmpty() ? "" : "/" + currentFolder) + " 中新建文件夹")
+                .setView(input).setNegativeButton("取消", null)
+                .setPositiveButton("创建", (dialog, which) -> {
+                    String name = input.getText().toString().trim();
+                    if (!validWorkspaceName(name)) { showError("无效的文件夹名称"); return; }
+                    try {
+                        WorkspaceFiles.Entry created = workspaceFiles.create(currentFolder, name, true);
+                        expandedFolders.add(created.path);
+                        refreshFiles();
+                    } catch (IOException e) { showError("新建文件夹失败：" + e.getMessage()); }
+                }).show();
+    }
+
     private void promptNew() {
         EditText input = new EditText(this);
         input.setSingleLine(true);
         input.setText("script.py");
-        new AlertDialog.Builder(this).setTitle("新建脚本")
+        new AlertDialog.Builder(this).setTitle(workspaceFiles == null ? "新建脚本" :
+                        "在 " + workspaceFiles.name() + (currentFolder.isEmpty() ? "" : "/" + currentFolder)
+                                + " 中新建文件")
                 .setView(input).setNegativeButton("取消", null)
                 .setPositiveButton("创建", (dialog, which) -> {
                     String name = input.getText().toString().trim();
+                    if (workspaceFiles != null) {
+                        if (!validWorkspaceName(name) || !editableFile(name)) {
+                            showError("请输入受支持的文本文件名，例如 main.py 或 README.md");
+                            return;
+                        }
+                        if (!saveScript(false)) return;
+                        try {
+                            WorkspaceFiles.Entry created = workspaceFiles.create(currentFolder, name, false);
+                            filename = created.path;
+                            loadedHash = hash(new byte[0]);
+                            editor.setText("");
+                            editorArea.setVisibility(View.VISIBLE);
+                            outputView.setText("");
+                            updateFilename();
+                            recordHistory(filename);
+                            refreshFiles();
+                            if (compact && sidebar.getVisibility() == View.VISIBLE) toggleSidebar();
+                        } catch (IOException e) { showError("新建文件失败：" + e.getMessage()); }
+                        return;
+                    }
                     if (!validName(name)) {
                         showError("文件名只能包含英文字母、数字、下划线和连字符，并以 .py 结尾");
                         return;
@@ -758,6 +999,19 @@ public class MainActivity extends Activity {
     }
 
     private void promptOpen() {
+        if (workspaceFiles != null) {
+            try {
+                ArrayList<String> names = new ArrayList<>();
+                for (WorkspaceFiles.Entry entry : workspaceFiles.listTree())
+                    if (!entry.directory && editableFile(entry.path)) names.add(entry.path);
+                if (names.isEmpty()) { showError("工作区没有可打开的文本文件"); return; }
+                new AlertDialog.Builder(this).setTitle("打开工作区文件")
+                        .setItems(names.toArray(new String[0]), (dialog, which) -> {
+                            if (saveScript(false)) { expandParents(names.get(which)); loadScript(names.get(which)); }
+                        }).setNegativeButton("取消", null).show();
+            } catch (IOException e) { showError("读取工作区失败：" + e.getMessage()); }
+            return;
+        }
         String[] names = scriptsDir.list((dir, name) -> name.endsWith(".py"));
         if (names == null || names.length == 0) { showError("没有可打开的脚本"); return; }
         Arrays.sort(names);
@@ -770,8 +1024,15 @@ public class MainActivity extends Activity {
 
     private void loadScript(String name, boolean record) {
         try {
-            byte[] bytes = Files.readAllBytes(scriptFile(name).toPath());
+            byte[] bytes;
+            if (workspaceFiles == null) bytes = Files.readAllBytes(scriptFile(name).toPath());
+            else {
+                WorkspaceFiles.Entry entry = workspaceFiles.find(name);
+                if (entry == null) throw new IOException("文件不存在：" + name);
+                bytes = workspaceFiles.read(entry, 2 * 1024 * 1024);
+            }
             filename = name;
+            loadedHash = workspaceFiles == null ? null : hash(bytes);
             editor.setText(new String(bytes, StandardCharsets.UTF_8));
             editor.setSelection(0);
             editorArea.setVisibility(View.VISIBLE);
@@ -791,13 +1052,27 @@ public class MainActivity extends Activity {
     private boolean saveScript() { return saveScript(true); }
 
     private boolean saveScript(boolean notify) {
+        if (filename.isEmpty() || editorArea.getVisibility() != View.VISIBLE) return true;
         try {
-            Files.write(scriptFile(filename).toPath(),
-                    editor.getText().toString().getBytes(StandardCharsets.UTF_8));
+            byte[] bytes = editor.getText().toString().getBytes(StandardCharsets.UTF_8);
+            if (workspaceFiles == null) Files.write(scriptFile(filename).toPath(), bytes);
+            else {
+                WorkspaceFiles.Entry entry = workspaceFiles.find(filename);
+                if (entry == null) throw new IOException("文件已从工作区移除");
+                if (loadedHash != null && !Arrays.equals(loadedHash,
+                        hash(workspaceFiles.read(entry, 2 * 1024 * 1024))))
+                    throw new IOException("文件已被外部修改；当前编辑内容尚未覆盖它");
+                workspaceFiles.write(entry, bytes);
+                loadedHash = hash(bytes);
+            }
             if (notify) Toast.makeText(this, "已保存 " + filename, Toast.LENGTH_SHORT).show();
-            refreshFiles();
             return true;
         } catch (IOException e) { showError("保存失败：" + e.getMessage()); return false; }
+    }
+
+    private static byte[] hash(byte[] bytes) {
+        try { return MessageDigest.getInstance("SHA-256").digest(bytes); }
+        catch (NoSuchAlgorithmException e) { throw new AssertionError(e); }
     }
 
     private void runScript() {
@@ -805,21 +1080,32 @@ public class MainActivity extends Activity {
             showError("请先在资源管理器中打开脚本");
             return;
         }
+        if (!filename.endsWith(".py")) {
+            showError("只能运行 .py 文件；其他文本文件可编辑和保存");
+            return;
+        }
         if (!runButton.isEnabled() || !saveScript(false)) return;
         String source = editor.getText().toString();
         String currentName = filename;
-        String path = scriptFile(currentName).getAbsolutePath();
+        WorkspaceFiles selectedWorkspace = workspaceFiles;
+        File runRoot = selectedWorkspace == null ? scriptsDir
+                : new File(new File(getFilesDir(), "workspace-runs"),
+                        "run-" + System.currentTimeMillis() + "-" + System.nanoTime());
+        String path = selectedWorkspace == null ? scriptFile(currentName).getAbsolutePath()
+                : new File(runRoot, currentName).getAbsolutePath();
         runButton.setEnabled(false);
         runButton.setAlpha(0.55f);
         if (consolePane.getVisibility() != View.VISIBLE) toggleConsole();
         consoleState.setText("运行中…");
         outputView.setText("正在执行 " + currentName + " …\n");
         runner.execute(() -> {
-            String result;
+            String result = "";
             boolean ok = false;
+            WorkspaceFiles.Snapshot snapshot = null;
             try {
+                if (selectedWorkspace != null) snapshot = selectedWorkspace.copyToMirror(runRoot);
                 result = NativePythonBridge.runCode(this, source, path,
-                        scriptsDir.getAbsolutePath());
+                        runRoot.getAbsolutePath());
                 JSONObject json = new JSONObject(result);
                 String out = json.optString("stdout") + json.optString("stderr");
                 ok = json.optBoolean("ok");
@@ -827,6 +1113,21 @@ public class MainActivity extends Activity {
                 result = out.isEmpty() ? "[无输出]\n" : out;
                 result += ok ? "\n[运行完成]" : "\n[运行失败]";
             } catch (Throwable e) { result = "解释器错误：" + e.getMessage(); }
+            if (snapshot != null) {
+                try {
+                    WorkspaceFiles.SyncResult sync = selectedWorkspace.copyChangesBack(runRoot, snapshot);
+                    if (sync.written > 0) result += "\n[已写回工作区 " + sync.written + " 个文件]";
+                    if (sync.conflicts > 0) {
+                        result += "\n[" + sync.conflicts + " 个文件被外部修改，未覆盖；运行副本已保留]";
+                        ok = false;
+                    } else {
+                        WorkspaceFiles.removeMirror(runRoot);
+                    }
+                } catch (Throwable e) {
+                    result += "\n[工作区写回失败：" + e.getMessage() + "；运行副本已保留]";
+                    ok = false;
+                }
+            }
             String finalResult = result;
             boolean finalOk = ok;
             runOnUiThread(() -> {
@@ -834,6 +1135,7 @@ public class MainActivity extends Activity {
                 consoleState.setText(finalOk ? "已完成" : "失败");
                 runButton.setEnabled(true);
                 runButton.setAlpha(1f);
+                if (workspaceFiles == selectedWorkspace) refreshFiles();
             });
         });
     }

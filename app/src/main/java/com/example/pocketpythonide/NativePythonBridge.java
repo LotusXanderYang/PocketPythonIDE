@@ -43,10 +43,29 @@ final class NativePythonBridge {
         try {
             Files.write(input.toPath(), command.toString().getBytes(StandardCharsets.UTF_8));
             String script = "try:\n"
-                    + "    import pocketpy_runtime_bridge\n"
-                    + "    pocketpy_runtime_bridge.main("
+                    + "    import os, sys\n";
+            if ("run".equals(command.optString("mode"))) {
+                String scripts = new File(context.getFilesDir(), "scripts").getAbsolutePath();
+                String workspace = new File(context.getFilesDir(), "workspace-runs").getAbsolutePath();
+                String entry = new File(command.getString("filename")).getParent();
+                script += "    _roots = (" + pythonQuote(scripts) + ", "
+                        + pythonQuote(workspace) + ")\n"
+                        + "    for _name, _module in list(sys.modules.items()):\n"
+                        + "        _path = getattr(_module, '__file__', None)\n"
+                        + "        if isinstance(_path, str) and any(os.path.realpath(_path).startswith(_root + os.sep) "
+                        + "for _root in _roots):\n"
+                        + "            sys.modules.pop(_name, None)\n"
+                        + "    _entry_dir = " + pythonQuote(entry) + "\n"
+                        + "    sys.path.insert(0, _entry_dir)\n";
+            }
+            script += "    try:\n"
+                    + "        import pocketpy_runtime_bridge\n"
+                    + "        pocketpy_runtime_bridge.main("
                     + pythonQuote(input.getAbsolutePath()) + ", "
-                    + pythonQuote(output.getAbsolutePath()) + ")\n";
+                    + pythonQuote(output.getAbsolutePath()) + ")\n"
+                    + "    finally:\n"
+                    + "        if '_entry_dir' in locals() and _entry_dir in sys.path:\n"
+                    + "            sys.path.remove(_entry_dir)\n";
             script += "except BaseException:\n"
                     + "    import traceback\n"
                     + "    with open(" + pythonQuote(diagnostic.getAbsolutePath())

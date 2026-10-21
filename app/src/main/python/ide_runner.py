@@ -52,6 +52,9 @@ def run_code(source, filename, workdir):
         sys.argv = [filename]
         if workdir not in sys.path:
             sys.path.insert(0, workdir)
+        script_dir = os.path.dirname(os.path.abspath(filename))
+        if script_dir != workdir and script_dir not in sys.path:
+            sys.path.insert(0, script_dir)
         namespace = {"__name__": "__main__", "__file__": filename,
                      "__package__": None, "__builtins__": __builtins__}
         with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
