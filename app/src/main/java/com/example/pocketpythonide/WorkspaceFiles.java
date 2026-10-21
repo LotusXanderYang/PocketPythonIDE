@@ -26,6 +26,11 @@ import java.util.Set;
 
 /** A SAF document tree. The document provider remains the source of truth. */
 final class WorkspaceFiles {
+    static final class CreationUnavailableException extends IOException {
+        CreationUnavailableException(String message) { super(message); }
+        CreationUnavailableException(String message, Throwable cause) { super(message, cause); }
+    }
+
     static final class Entry {
         final String path;
         final Uri uri;
@@ -80,6 +85,29 @@ final class WorkspaceFiles {
         ArrayList<Entry> result = new ArrayList<>();
         collect(root, "", result, 0);
         return result;
+    }
+
+    /** List only expanded folders for the explorer; execution still snapshots the full tree. */
+    List<Entry> listVisibleTree(Set<String> expanded) throws IOException {
+        ArrayList<Entry> result = new ArrayList<>();
+        collectVisible(root, "", result, expanded, 0);
+        return result;
+    }
+
+    private void collectVisible(Uri parent, String prefix, List<Entry> out,
+            Set<String> expanded, int depth) throws IOException {
+        if (depth > 24) throw new IOException("文件夹嵌套超过 24 层");
+        List<Entry> visible = children(parent, prefix);
+        visible.sort(Comparator.comparing((Entry e) -> !e.directory)
+                .thenComparing(e -> e.name().toLowerCase(java.util.Locale.ROOT)));
+        for (Entry entry : visible) {
+            if (out.size() >= MAX_ENTRIES)
+                throw new IOException("资源管理器超过 2000 个项目，请收起部分文件夹");
+            out.add(entry);
+            if (entry.directory && expanded.contains(entry.path)
+                    && !SKIP_DIRS.contains(entry.name()))
+                collectVisible(entry.uri, entry.path, out, expanded, depth + 1);
+        }
     }
 
     private void collect(Uri parent, String prefix, List<Entry> out, int depth) throws IOException {
@@ -151,11 +179,39 @@ final class WorkspaceFiles {
                 : mimeType(filename);
         try {
             Uri uri = DocumentsContract.createDocument(resolver, parent.uri, mime, filename);
-            if (uri == null) throw new IOException("文档提供者未创建文件");
+            if (uri == null) {
+                // A few providers create the document but omit its URI in the response.
+                Entry created = find(path);
+                if (created != null) return created;
+                throw new CreationUnavailableException("文档提供者不支持直接创建");
+            }
             String actualName = queryName(uri);
+            if (!filename.equals(actualName))
+                throw new IOException("文档提供者将文件命名为 " + actualName
+                        + "，而不是 " + filename + "；请在文件管理器中重命名后重新打开");
             String actualPath = parentPath.isEmpty() ? actualName : parentPath + "/" + actualName;
             return new Entry(actualPath, uri, directory, 0);
-        } catch (RuntimeException e) { throw providerError("创建文件", e); }
+        } catch (SecurityException e) { throw providerError("创建文件", e); }
+        catch (RuntimeException e) {
+            throw new CreationUnavailableException("文档提供者无法直接创建（"
+                    + e.getClass().getSimpleName() + "）", e);
+        }
+    }
+
+    Entry resolveCreatedDocument(String parentPath, Uri createdUri, String requestedName)
+            throws IOException {
+        String filename = queryName(createdUri);
+        if (!requestedName.equals(filename))
+            throw new IOException("文档提供者将文件命名为 " + filename
+                    + "，而不是 " + requestedName + "；请在文件管理器中重命名后重新打开");
+        String path = parentPath.isEmpty() ? filename : parentPath + "/" + filename;
+        Entry entry = find(path);
+        if (entry == null || entry.directory || !entry.uri.getAuthority().equals(createdUri.getAuthority())
+                || !DocumentsContract.getDocumentId(entry.uri)
+                        .equals(DocumentsContract.getDocumentId(createdUri))) {
+            throw new IOException("新文件不在当前工作区文件夹内，请在系统窗口中选择该文件夹");
+        }
+        return entry;
     }
 
     byte[] read(Entry entry, int limit) throws IOException {
@@ -348,9 +404,9 @@ final class WorkspaceFiles {
                 && !name.contains("/") && !name.contains("\\") && name.length() <= 100;
     }
 
-    private static String mimeType(String name) {
-        // Some Android/Harmony document providers reject nonstandard Python MIME types.
-        if (name.endsWith(".py") || name.endsWith(".pyi")) return "text/plain";
+    static String mimeType(String name) {
+        // text/plain makes some providers append .txt to Python source files.
+        if (name.endsWith(".py") || name.endsWith(".pyi")) return "text/x-python";
         String guessed = java.net.URLConnection.guessContentTypeFromName(name);
         return guessed == null ? "application/octet-stream" : guessed;
     }

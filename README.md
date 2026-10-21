@@ -6,13 +6,14 @@
 
 ## 下载
 
-从 [v0.1.2-beta.1 测试版](https://github.com/LotusXanderYang/PocketPythonIDE/releases/tag/v0.1.2-beta.1) 下载 APK。它是调试签名的测试构建，适合在自己的设备上试用。首次打开 Python 环境时，应用会核对内置运行时的 SHA-256 并解包；后续运行直接使用已解包内容。
+当前公开的 APK 位于 [v0.1.1-beta.1](https://github.com/LotusXanderYang/PocketPythonIDE/releases/tag/v0.1.1-beta.1)。源码版本为 `0.1.2-beta.4`，可按下文构建；它修复了部分鸿蒙兼容环境中创建 `.py` 文件时被自动补上 `.txt` 的问题。测试 APK 使用调试签名，适合在自己的设备上试用。首次打开 Python 环境时，应用会核对内置运行时的 SHA-256 并解包；后续运行直接使用已解包内容。
 
-APK 的 Python/PyTorch 运行时约 165 MB。为避免将大文件写入 Git 历史，`runtime.zip` 放在同一 Release 的附件中，仓库保留 [哈希与依赖清单](app/src/main/assets/runtime.json)。
+APK 的 Python/PyTorch 运行时约 165 MB。为避免将大文件写入 Git 历史，`runtime.zip` 放在 v0.1.1 Release 的附件中，仓库保留 [哈希与依赖清单](app/src/main/assets/runtime.json)。
 
 ## 功能
 
 - 在“文件 → 打开文件夹”中选择 Android 文档提供者里的文件夹，授予持久读写权限，将其作为工作区。资源管理器显示嵌套目录与文件，可新建文件、文件夹，编辑并保存常见文本文件。关闭文件夹后仍可使用应用内部的 `files/scripts` 目录。
+- 部分鸿蒙设备的安卓兼容环境会在文件选择器中同时显示原生鸿蒙目录和兼容环境目录。MRO-W00（OpenHarmony 6.1.1.120）上，原生“我的平板/个人/PythonProject”目录能浏览，但文档提供者拒绝新建文件，系统创建文件窗口也无法保存；兼容环境的 `Android` 目录可以创建、编辑和保存 `.py` 文件。请在文件选择器中选可写的兼容环境目录作为工作区。
 - 运行工作区内的 `.py` 文件时，IDE 将项目复制到应用私有运行目录，支持同目录模块、包和项目根目录导入；执行后将新增或修改的文件写回所选文件夹。若外部文件同时发生变化，IDE 跳过覆盖并在输出面板报告冲突。
 - 行号、基础语法着色、当前行提示、小地图、资源管理器和运行输出面板。
 - 输入 Python 标识符时弹出离线代码提示：关键字、内置函数、当前文件的函数/类/变量/导入名，以及已导入的 `torch`、`numpy` 和常见标准库模块成员。`p` 会优先显示 `print`；点按候选或用实体键盘方向键、Tab、Enter 插入。内置函数会插入括号并将光标放在括号中。注释和字符串内不触发提示。当前补全依靠轻量静态索引，不提供跨文件类型推断、签名文档或完整的 PyTorch API 清单。
@@ -48,7 +49,7 @@ cd PocketPythonIDE
 python .\tools\verify-device-runtime.py --serial <ADB设备序列号> --expect-python 3.14.6 --expect-torch 2.14.1
 ```
 
-0.1.1 的文件夹工作区功能和 0.1.2 的代码提示已完成编译验证；补全核心逻辑也通过宿主机冒烟测试。尚未在实机上验证文件选择器、跨文件导入和代码提示弹窗。此前的 Python/PyTorch 实机结果来自 0.1.0 构建。目前仅在 4 KB 内存页实机上运行过；16 KB 对齐通过静态审计，还需要 16 KB 内存页设备实测。运行时是在应用进程内执行的 CPU 版 CPython/PyTorch，耗时脚本与原生扩展故障可能影响 IDE 进程。
+0.1.2-beta.4 在 MRO-W00 上验证了兼容环境工作区中新建、编辑和保存 `.py` 文件，且文件名不会被追加 `.txt`。文件夹选择器与新建文件路径已在实机走通；跨文件导入和代码提示弹窗仍需单独实测。此前的 Python/PyTorch 完整自检来自 0.1.0 构建。目前仅在 4 KB 内存页实机上运行过；16 KB 对齐通过静态审计，还需要 16 KB 内存页设备实测。运行时是在应用进程内执行的 CPU 版 CPython/PyTorch，耗时脚本与原生扩展故障可能影响 IDE 进程。
 
 工作区通过 Android 的文档访问框架访问，不能把 `content://` 路径直接交给 CPython。运行副本当前最多 2000 项、单文件 256 MB、总计 512 MB；编辑器只打开不超过 2 MB 的常见文本文件。`.git`、虚拟环境、构建目录和 Python 缓存不会复制。脚本创建的空文件夹和删除操作暂不回写，支持的文件修改与新增会回写；写回失败时应用会保留私有运行副本并报告错误。若脚本改写了当前打开的文件，请重新打开它查看结果。云盘提供者的速度与离线可用性取决于其自身实现。
 
@@ -60,4 +61,4 @@ python .\tools\verify-device-runtime.py --serial <ADB设备序列号> --expect-p
 
 ---
 
-**English:** PocketPythonIDE is an experimental Android tablet IDE bundling CPython 3.14.6, CPU PyTorch 2.14.1, and NumPy 2.5.4 for ARM64. Version 0.1.2 adds offline Python completion for builtins, local symbols, and common imported module members. Download the beta APK from Releases, or fetch the pinned runtime asset and run `build-local.ps1`. The app source is MIT licensed; bundled dependencies retain their own licenses.
+**English:** PocketPythonIDE is an experimental Android tablet IDE bundling CPython 3.14.6, CPU PyTorch 2.14.1, and NumPy 2.5.4 for ARM64. Source version 0.1.2-beta.4 adds offline Python completion and fixes `.py.txt` filenames in a HarmonyOS Android compatibility workspace. The latest published APK is v0.1.1-beta.1; build the current source with the pinned runtime asset and `build-local.ps1`. The app source is MIT licensed; bundled dependencies retain their own licenses.

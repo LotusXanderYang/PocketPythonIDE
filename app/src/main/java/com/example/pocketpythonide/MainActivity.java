@@ -2,6 +2,9 @@ package com.example.pocketpythonide;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -26,6 +29,8 @@ import android.widget.Toast;
 import org.json.JSONObject;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.security.MessageDigest;
@@ -49,7 +54,10 @@ public class MainActivity extends Activity {
     private static final int MUTED = Color.rgb(143, 143, 143);
     private static final int ACCENT = Color.rgb(0, 122, 204);
     private static final int OPEN_FOLDER_REQUEST = 501;
+    private static final int CREATE_FILE_REQUEST = 502;
     private static final String WORKSPACE_PREF = "workspace_tree_uri";
+    private static final String CRASH_REPORT = "last-java-crash.txt";
+    private static boolean crashHandlerInstalled;
     private static final String STARTER = "import torch\n\n"
             + "print('torch:', torch.__version__)\n"
             + "x = torch.tensor([[1.0, 2.0], [3.0, 4.0]])\n"
@@ -85,10 +93,14 @@ public class MainActivity extends Activity {
     private byte[] loadedHash;
     private String currentFolder = "";
     private WorkspaceFiles workspaceFiles;
+    private String pendingCreateFolder;
+    private Uri pendingCreateTree;
+    private String pendingCreateName;
     private final Set<String> expandedFolders = new HashSet<>();
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
+        installCrashHandler(getApplicationContext());
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getWindow().setStatusBarColor(CHROME);
@@ -125,16 +137,8 @@ public class MainActivity extends Activity {
         String initial = state == null ? filename : state.getString("filename", filename);
         if (workspaceFiles != null) {
             try {
-                WorkspaceFiles.Entry entry = workspaceFiles.find(initial);
-                if (entry == null || entry.directory || !editableFile(initial)) {
-                    initial = "";
-                    for (WorkspaceFiles.Entry candidate : workspaceFiles.listTree()) {
-                        if (!candidate.directory && candidate.path.endsWith(".py")) {
-                            initial = candidate.path;
-                            break;
-                        }
-                    }
-                }
+                WorkspaceFiles.Entry entry = initial.isEmpty() ? null : workspaceFiles.find(initial);
+                if (entry == null || entry.directory || !editableFile(initial)) initial = "";
                 if (!initial.isEmpty()) loadScript(initial);
                 else { filename = ""; editorArea.setVisibility(View.INVISIBLE); updateFilename(); }
             } catch (IOException e) { showError("工作区加载失败：" + e.getMessage()); }
@@ -143,10 +147,48 @@ public class MainActivity extends Activity {
             loadScript(initial);
         }
         if (state != null) {
+            pendingCreateFolder = state.getString("pendingCreateFolder");
+            pendingCreateName = state.getString("pendingCreateName");
+            String pendingTree = state.getString("pendingCreateTree");
+            pendingCreateTree = pendingTree == null ? null : Uri.parse(pendingTree);
             editor.setText(state.getString("source", editor.getText().toString()));
             editor.setSelection(Math.min(state.getInt("selection", 0), editor.length()));
             outputView.setText(state.getString("output", outputView.getText().toString()));
         }
+        showPreviousCrash();
+    }
+
+    private static synchronized void installCrashHandler(Context context) {
+        if (crashHandlerInstalled) return;
+        Thread.UncaughtExceptionHandler previous = Thread.getDefaultUncaughtExceptionHandler();
+        File report = new File(context.getFilesDir(), CRASH_REPORT);
+        Thread.setDefaultUncaughtExceptionHandler((thread, error) -> {
+            try {
+                StringWriter stack = new StringWriter();
+                error.printStackTrace(new PrintWriter(stack));
+                Files.write(report.toPath(), stack.toString().getBytes(StandardCharsets.UTF_8));
+            } catch (Throwable ignored) { /* Preserve the platform's crash handler. */ }
+            if (previous != null) previous.uncaughtException(thread, error);
+        });
+        crashHandlerInstalled = true;
+    }
+
+    private void showPreviousCrash() {
+        File report = new File(getFilesDir(), CRASH_REPORT);
+        if (!report.isFile()) return;
+        try {
+            String stack = new String(Files.readAllBytes(report.toPath()), StandardCharsets.UTF_8);
+            if (!report.delete()) report.deleteOnExit();
+            new AlertDialog.Builder(this)
+                    .setTitle("上次运行发生异常")
+                    .setMessage(stack.length() > 12000 ? stack.substring(0, 12000) : stack)
+                    .setPositiveButton("复制诊断信息", (dialog, which) -> {
+                        ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+                        if (clipboard != null) clipboard.setPrimaryClip(ClipData.newPlainText("IDE crash", stack));
+                    })
+                    .setNegativeButton("关闭", null)
+                    .show();
+        } catch (IOException ignored) { /* A report is optional diagnostic data. */ }
     }
 
     private void buildUi() {
@@ -666,7 +708,7 @@ public class MainActivity extends Activity {
         fileList.removeAllViews();
         if (workspaceFiles != null) {
             try {
-                for (WorkspaceFiles.Entry entry : workspaceFiles.listTree()) {
+                for (WorkspaceFiles.Entry entry : workspaceFiles.listVisibleTree(expandedFolders)) {
                     if (!visibleInTree(entry.path)) continue;
                     boolean active = entry.path.equals(filename);
                     LinearLayout itemRow = row(SIDEBAR);
@@ -887,6 +929,24 @@ public class MainActivity extends Activity {
 
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == CREATE_FILE_REQUEST) {
+            String folder = pendingCreateFolder;
+            Uri tree = pendingCreateTree;
+            String requestedName = pendingCreateName;
+            pendingCreateFolder = null;
+            pendingCreateTree = null;
+            pendingCreateName = null;
+            if (resultCode != RESULT_OK || data == null || data.getData() == null) return;
+            if (workspaceFiles == null || folder == null || tree == null || requestedName == null
+                    || !tree.equals(workspaceFiles.treeUri())) {
+                showError("工作区已变化，请重新创建文件");
+                return;
+            }
+            try { activateCreatedFile(workspaceFiles.resolveCreatedDocument(
+                    folder, data.getData(), requestedName)); }
+            catch (Exception e) { showError("新建文件失败：" + e.getMessage()); }
+            return;
+        }
         if (requestCode != OPEN_FOLDER_REQUEST || resultCode != RESULT_OK || data == null
                 || data.getData() == null) return;
         Uri tree = data.getData();
@@ -899,7 +959,6 @@ public class MainActivity extends Activity {
         try {
             getContentResolver().takePersistableUriPermission(tree, flags);
             WorkspaceFiles next = new WorkspaceFiles(this, tree);
-            List<WorkspaceFiles.Entry> entries = next.listTree();
             workspaceFiles = next;
             getPreferences(MODE_PRIVATE).edit().putString(WORKSPACE_PREF, tree.toString()).apply();
             history.clear();
@@ -912,14 +971,6 @@ public class MainActivity extends Activity {
             outputView.setText("");
             editorArea.setVisibility(View.INVISIBLE);
             updateFilename();
-            refreshFiles();
-            for (WorkspaceFiles.Entry entry : entries) {
-                if (!entry.directory && entry.path.endsWith(".py")) {
-                    expandParents(entry.path);
-                    loadScript(entry.path);
-                    break;
-                }
-            }
             refreshFiles();
             if (compact && sidebar.getVisibility() != View.VISIBLE) toggleSidebar();
             Toast.makeText(this, "已打开工作区：" + next.name(), Toast.LENGTH_SHORT).show();
@@ -988,15 +1039,9 @@ public class MainActivity extends Activity {
                         if (!saveScript(false)) return;
                         try {
                             WorkspaceFiles.Entry created = workspaceFiles.create(currentFolder, name, false);
-                            filename = created.path;
-                            loadedHash = hash(new byte[0]);
-                            editor.setText("");
-                            editorArea.setVisibility(View.VISIBLE);
-                            outputView.setText("");
-                            updateFilename();
-                            recordHistory(filename);
-                            refreshFiles();
-                            if (compact && sidebar.getVisibility() == View.VISIBLE) toggleSidebar();
+                            activateCreatedFile(created);
+                        } catch (WorkspaceFiles.CreationUnavailableException e) {
+                            createWithSystemPicker(name);
                         } catch (IOException e) { showError("新建文件失败：" + e.getMessage()); }
                         return;
                     }
@@ -1016,6 +1061,41 @@ public class MainActivity extends Activity {
                     refreshFiles();
                     if (compact && sidebar.getVisibility() == View.VISIBLE) toggleSidebar();
                 }).show();
+    }
+
+    private void createWithSystemPicker(String name) {
+        try {
+            WorkspaceFiles.Entry parent = workspaceFiles.find(currentFolder);
+            if (parent == null || !parent.directory) throw new IOException("目标文件夹不存在");
+            Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            intent.setType(WorkspaceFiles.mimeType(name));
+            intent.putExtra(Intent.EXTRA_TITLE, name);
+            intent.putExtra(android.provider.DocumentsContract.EXTRA_INITIAL_URI, parent.uri);
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            pendingCreateFolder = currentFolder;
+            pendingCreateTree = workspaceFiles.treeUri();
+            pendingCreateName = name;
+            startActivityForResult(intent, CREATE_FILE_REQUEST);
+        } catch (Exception e) {
+            pendingCreateFolder = null;
+            pendingCreateTree = null;
+            pendingCreateName = null;
+            showError("系统文件选择器无法创建文件：" + e.getMessage());
+        }
+    }
+
+    private void activateCreatedFile(WorkspaceFiles.Entry created) {
+        filename = created.path;
+        loadedHash = hash(new byte[0]);
+        editor.setText("");
+        editorArea.setVisibility(View.VISIBLE);
+        outputView.setText("");
+        updateFilename();
+        recordHistory(filename);
+        refreshFiles();
+        if (compact && sidebar.getVisibility() == View.VISIBLE) toggleSidebar();
     }
 
     private void promptOpen() {
@@ -1174,6 +1254,9 @@ public class MainActivity extends Activity {
     }
 
     @Override protected void onSaveInstanceState(Bundle outState) {
+        outState.putString("pendingCreateFolder", pendingCreateFolder);
+        outState.putString("pendingCreateName", pendingCreateName);
+        outState.putString("pendingCreateTree", pendingCreateTree == null ? null : pendingCreateTree.toString());
         outState.putString("filename", filename);
         outState.putString("source", editor.getText().toString());
         outState.putInt("selection", editor.getSelectionStart());
