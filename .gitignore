@@ -1,0 +1,26 @@
+.gradle/
+.idea/
+.toolchain/
+build/
+app/build/
+local.properties
+*.iml
+*.keystore
+*.pyc
+**/__pycache__/
+app/src/main/assets/runtime.zip
+app/src/main/assets/runtime.zip.download
+
+# Local build and device history; public build instructions live in README.md.
+docs/BUILD-CHECKPOINT-*.md
+docs/BUILD-COMPLETE-*.md
+docs/BUILD-STATUS-*.md
+docs/RESUME-CHECKPOINT-*.md
+docs/pytorch-2.14-port.md
+tools/backup-device-scripts.py
+tools/enable-wsl-*.ps1
+tools/fetch-ranged-archive.py
+tools/inspect-wsl-boot.ps1
+tools/resume-modern-runtime-build.sh
+tools/run-modern-runtime-build.sh
+

@@ -1,0 +1,18 @@
+diff --git a/packages/python-torch/build.sh b/packages/python-torch/build.sh
+index 4ef395d..354d6e2 100644
+--- a/packages/python-torch/build.sh
++++ b/packages/python-torch/build.sh
+@@ -84,6 +84,13 @@ termux_step_pre_configure() {
+ }
+ 
+ termux_step_make_install() {
++	# Termux -c deliberately skips termux_step_get_dependencies_python.
++	# Restore the crossenv build tools before pip invokes the wheel backend;
++	# otherwise /usr/bin/pip cannot import scikit_build_core.build.
++	if [ "$TERMUX_CONTINUE_BUILD" = "true" ]; then
++		termux_step_get_dependencies_python
++		export PYTHONPATH="${PYTHONPATH}:${TERMUX_PKG_SRCDIR}"
++	fi
+ 	export PYTORCH_BUILD_VERSION=${TERMUX_PKG_VERSION}
+ 	export PYTORCH_BUILD_NUMBER=0
+ 	export CMAKE_ARGS="-DCMAKE_ASM_FLAGS=--target=${TERMUX_HOST_PLATFORM}${TERMUX_PKG_API_LEVEL}"

@@ -1,0 +1,196 @@
+{
+  "app_id": "com.example.pocketpythonide",
+  "python": "3.14.6",
+  "torch": "2.14.1",
+  "packages": [
+    {
+      "name": "abseil-cpp",
+      "version": "20260526.0",
+      "sha256": "8493fa7e49606fb8c8fd249d0374b888e0c9825714b6442a965f23c1b84f2ade"
+    },
+    {
+      "name": "ca-certificates",
+      "version": "1:2026.09.25",
+      "sha256": "05641974320c1a8b84da5f1c23a53301138000fb7ed88eac6a8f8a59283d3c4f"
+    },
+    {
+      "name": "gdbm",
+      "version": "1.26-1",
+      "sha256": "b79d251478b8f1e198bcbc0b94221a156439ab65e9bf4590cfa1e4062bbd401b"
+    },
+    {
+      "name": "libandroid-execinfo",
+      "version": "0.1-3",
+      "sha256": "674dc657b610658f1423336b50dfd40c9e9b24705b16708dadc0da8799880641"
+    },
+    {
+      "name": "libandroid-posix-semaphore",
+      "version": "0.1-4",
+      "sha256": "67b4b0015283cb48b831d0e6bcaee875c836c4a5cfebb4bda23f2b7aea96af08"
+    },
+    {
+      "name": "libandroid-support",
+      "version": "29-1",
+      "sha256": "2822f29d578940b48a74bf358163a0e3e0e915ae0aef54c2daf02fb28bad6eef"
+    },
+    {
+      "name": "libbz2",
+      "version": "1.0.8-8",
+      "sha256": "afea8902601c078bc37134b9db91129efbbba8f94582eb52690520e0f2e2657d"
+    },
+    {
+      "name": "libc++",
+      "version": "30",
+      "sha256": "033647e2a3168abdce3cdbc998177d82c560c1cd759c2eea9de42a1bc5ace8b6"
+    },
+    {
+      "name": "libcrypt",
+      "version": "0.2-6",
+      "sha256": "72c1df1c5ae3e4f43744a4f1389aa4b827228eee1001eb4bb352d70af7539280"
+    },
+    {
+      "name": "libexpat",
+      "version": "2.9.0",
+      "sha256": "e4cbad716cc10a33a6e8ae752a31be3aed7435105a3dbc48a2967a0988cb88cd"
+    },
+    {
+      "name": "libffi",
+      "version": "3.8.0",
+      "sha256": "a6bd3b96ce18e8b1329ac194a2c1f0823d407a6cda3911c91af9538fc09c331d"
+    },
+    {
+      "name": "liblzma",
+      "version": "5.8.4",
+      "sha256": "18804a4b9db05815e2c7d5b32a6c7d97530677a135c729e774a5315cbf0c8940"
+    },
+    {
+      "name": "libopenblas",
+      "version": "0.3.34",
+      "sha256": "ea8b50a90dfc569be7387e236ba887e7cc3ecc086774d5f544c2b14e26f00e00"
+    },
+    {
+      "name": "libprotobuf",
+      "version": "2:36.2",
+      "sha256": "eae891343e22073d268d51928fdd67b6f302bcb894722a3a0c0f2104c50e8da7"
+    },
+    {
+      "name": "libsqlite",
+      "version": "3.54.1",
+      "sha256": "9ddaf91d3f79b35d3550f384cad5aeb9c87da529ef1a49cda1c30067376ffc7c"
+    },
+    {
+      "name": "ncurses",
+      "version": "6.6.20260307+really6.5.20250830",
+      "sha256": "618bd622ad22ffdbb69fa1774736d39cc0c2a16d15d3697d8c7a6fd29a5d020f"
+    },
+    {
+      "name": "ncurses-ui-libs",
+      "version": "6.6.20260307+really6.5.20250830",
+      "sha256": "ba143f4407378698e7a134545427da25719c767e2d59197adc7410fa11821d8a"
+    },
+    {
+      "name": "openssl",
+      "version": "1:3.6.5",
+      "sha256": "40fab59a6dcb174720e3ed422178b34f8ef6c11c32c1923ac1e763749713732e"
+    },
+    {
+      "name": "python",
+      "version": "3.14.6-1",
+      "sha256": "240b105c35121ff81b623691f6ac82ed72b9395b28cb54dab3f740163b3cb726"
+    },
+    {
+      "name": "python-numpy",
+      "version": "2.5.4",
+      "sha256": "9d747874c45ba732db8378b66bacb367fe871aa5cf336562d1c70bdbdbb26d9a"
+    },
+    {
+      "name": "python-pip",
+      "version": "26.2.1",
+      "sha256": "3b414f3672ae23e4e714d2439db94ae53d1fb9a51a6b85766e93dc5b6daa2a1c"
+    },
+    {
+      "name": "python-torch",
+      "version": "2.14.1-2",
+      "sha256": "b5b99672073984adf6f46e88b4fba7371852f3daf87eda36eb4f4ab20ad7a3ab"
+    },
+    {
+      "name": "readline",
+      "version": "8.3.6",
+      "sha256": "e3644b774cc2182c5225f7e5b1f9aa8dd320186931595feaca16522df1cf4655"
+    },
+    {
+      "name": "zlib",
+      "version": "1.3.2",
+      "sha256": "71222faf44c159dcf48888bcb092689e82a9e1b9cb55ddff014d98646c5ab50e"
+    },
+    {
+      "name": "zstd",
+      "version": "1.5.7-1",
+      "sha256": "b319f20d118b67d919c3e8b693b2d2576deb6ee8a20880f99e7f492606119fb3"
+    }
+  ],
+  "files": 17041,
+  "elf_files": 297,
+  "relocatable_elf_files": 1,
+  "excluded_paths": [
+    "usr/share/doc"
+  ],
+  "excluded_wheel_files": [
+    "sympy-1.14.0-py3-none-any.whl:sympy-1.14.0.data/data/share/man/man1/isympy.1"
+  ],
+  "asset": "runtime.zip",
+  "asset_sha256": "45e7c3baa507b2c6b6d8b0338b5ef22d947b4cfed6e618234a5f57f4f527f7a4",
+  "asset_bytes": 164754701,
+  "modules": [
+    {
+      "name": "pocketpy_runtime_bridge.py",
+      "sha256": "0ba6d3c7660b59e86a16c5591e872e1939a1e734c075549035b9107bb424cfcf"
+    },
+    {
+      "name": "ide_runner.py",
+      "sha256": "659b6d9ce7142595d85c66263a0a3c95d22c7ae0507264a3365b303a338318b3"
+    },
+    {
+      "name": "runtime_probe.py",
+      "sha256": "5340aed0ccacd7ebd0566ced38ae17332caa5032abaaa52e94e8690b8281c59f"
+    }
+  ],
+  "wheels": [
+    {
+      "name": "filelock-4.2.4-py3-none-any.whl",
+      "sha256": "301241438c57936ef93f4243a94f2559022268bfcf9b375a9a72eb0f8db8358e"
+    },
+    {
+      "name": "typing_extensions-4.16.0-py3-none-any.whl",
+      "sha256": "481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8"
+    },
+    {
+      "name": "setuptools-84.2.0-py3-none-any.whl",
+      "sha256": "8cc107ac7a403105dc8d6477664171f36135fab26adf8b5e0edaebc313f39b21"
+    },
+    {
+      "name": "sympy-1.14.0-py3-none-any.whl",
+      "sha256": "e091cc3e99d2141a0ba2847328f5479b05d94a6635cb96148ccb3f34671bd8f5"
+    },
+    {
+      "name": "networkx-3.7-py3-none-any.whl",
+      "sha256": "e3fd2c13a7814cee3746340d8d7f8598a67f16a58bf47fb7f8793fab6efca1b0"
+    },
+    {
+      "name": "jinja2-3.1.6-py3-none-any.whl",
+      "sha256": "85ece4451f492d0c13c5dd7c13a64681a86afae63a5f347908daf103ce6d2f67"
+    },
+    {
+      "name": "fsspec-2026.9.0-py3-none-any.whl",
+      "sha256": "8dd6e646e99ea382bd85f97a45e6b526a442d79423a7dc673f1e2756d05fcb5f"
+    },
+    {
+      "name": "mpmath-1.3.0-py3-none-any.whl",
+      "sha256": "a0b2b9fe80bbcd81a6647ff13108738cfb482d481d826cc0e02f5b35e5c88d2c"
+    },
+    {
+      "name": "markupsafe-3.0.4-py3-none-any.whl",
+      "sha256": "8f1275ea2606d682d91a6622bc680a777c4754708402797a058f08122d71a13b"
+    }
+  ]
+}
