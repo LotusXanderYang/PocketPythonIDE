@@ -83,8 +83,11 @@ final class EditorCompletionPopup {
             render();
             return true;
         }
-        if (keyCode == KeyEvent.KEYCODE_TAB || keyCode == KeyEvent.KEYCODE_ENTER
-                || keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER) {
+        if (keyCode == KeyEvent.KEYCODE_TAB) {
+            dismiss();
+            return false;
+        }
+        if (keyCode == KeyEvent.KEYCODE_ENTER || keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER) {
             accept(selected);
             return true;
         }
@@ -142,7 +145,7 @@ final class EditorCompletionPopup {
             panel.addView(row, new LinearLayout.LayoutParams(-1, dp(33)));
         }
         TextView hint = new TextView(activity);
-        hint.setText("↑↓ 选择    Tab / Enter 插入");
+        hint.setText("↑↓ 选择    Enter 插入    Tab 缩进");
         hint.setTextColor(MUTED);
         hint.setTextSize(10);
         hint.setGravity(Gravity.CENTER_VERTICAL);

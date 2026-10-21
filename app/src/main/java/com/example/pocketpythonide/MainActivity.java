@@ -23,6 +23,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -56,6 +57,7 @@ public class MainActivity extends Activity {
     private static final int OPEN_FOLDER_REQUEST = 501;
     private static final int CREATE_FILE_REQUEST = 502;
     private static final String WORKSPACE_PREF = "workspace_tree_uri";
+    private static final String FONT_SIZE_PREF = "editor_font_size_sp";
     private static final String CRASH_REPORT = "last-java-crash.txt";
     private static boolean crashHandlerInstalled;
     private static final String STARTER = "import torch\n\n"
@@ -257,7 +259,7 @@ public class MainActivity extends Activity {
         topMenu(bar, "编辑(E)", "全选", "剪切", "复制", "粘贴");
         if (!compact) {
             topMenu(bar, "选择(S)", "全选", "跳转到行");
-            topMenu(bar, "查看(V)", "资源管理器", "小地图", "运行输出");
+            topMenu(bar, "查看(V)", "资源管理器", "小地图", "运行输出", "字体大小");
             topMenu(bar, "转到(G)", "上一文件", "下一文件", "跳转到行");
         }
         runButton = topMenu(bar, "运行(R)", "运行当前脚本", "查看运行输出");
@@ -325,6 +327,7 @@ public class MainActivity extends Activity {
             case "粘贴": editor.onTextContextMenuItem(android.R.id.paste); break;
             case "资源管理器": toggleSidebar(); break;
             case "小地图": minimap.setVisibility(minimap.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE); break;
+            case "字体大小": showFontSizeDialog(); break;
             case "运行输出":
             case "查看运行输出": if (consolePane.getVisibility() != View.VISIBLE) toggleConsole(); break;
             case "上一文件": navigateHistory(-1); break;
@@ -449,14 +452,49 @@ public class MainActivity extends Activity {
                 }).show();
     }
 
-    private void showSettings() {
-        String[] sizes = {"小字 13 sp", "标准 15 sp", "大字 18 sp"};
-        int[] values = {13, 15, 18};
+    private void showSettings() { showFontSizeDialog(); }
+
+    private void applyFontSize(int sizeSp) {
+        editor.setTextSize(TypedValue.COMPLEX_UNIT_SP, sizeSp);
+        lineNumbers.setTextSize(TypedValue.COMPLEX_UNIT_SP, sizeSp);
+    }
+
+    private void showFontSizeDialog() {
+        int original = getPreferences(MODE_PRIVATE).getInt(FONT_SIZE_PREF, 15);
+        LinearLayout content = column(SURFACE);
+        content.setPadding(dp(24), dp(15), dp(24), dp(13));
+        TextView sizeLabel = label(original + " sp", 15, TEXT, true);
+        content.addView(sizeLabel);
+        SeekBar slider = new SeekBar(this);
+        slider.setMin(10);
+        slider.setMax(32);
+        slider.setProgress(original);
+        content.addView(slider, size(-1, dp(51)));
+        TextView preview = label("def hello():\n    print(\"Hello, Python\")", original, TEXT, false);
+        preview.setTypeface(Typeface.MONOSPACE);
+        preview.setPadding(dp(10), dp(9), dp(10), dp(9));
+        preview.setBackground(rounded(EDITOR, 5));
+        content.addView(preview, size(-1, -2));
+        TextView reset = label("恢复默认 · 15 sp", 12, Color.rgb(92, 180, 231), false);
+        reset.setPadding(0, dp(14), 0, 0);
+        interactive(reset, view -> slider.setProgress(15));
+        content.addView(reset);
+        slider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar bar, int value, boolean fromUser) {
+                sizeLabel.setText(value + " sp");
+                preview.setTextSize(TypedValue.COMPLEX_UNIT_SP, value);
+                applyFontSize(value);
+            }
+            @Override public void onStartTrackingTouch(SeekBar bar) { }
+            @Override public void onStopTrackingTouch(SeekBar bar) { }
+        });
         new AlertDialog.Builder(this).setTitle("编辑器字体大小")
-                .setItems(sizes, (dialog, which) -> {
-                    editor.setTextSize(values[which]);
-                    lineNumbers.setTextSize(values[which]);
-                }).show();
+                .setView(content)
+                .setNegativeButton("取消", (dialog, which) -> applyFontSize(original))
+                .setPositiveButton("保存", (dialog, which) -> getPreferences(MODE_PRIVATE)
+                        .edit().putInt(FONT_SIZE_PREF, slider.getProgress()).apply())
+                .setOnCancelListener(dialog -> applyFontSize(original))
+                .show();
     }
 
     private void promptSearch() {
@@ -612,7 +650,8 @@ public class MainActivity extends Activity {
 
         LinearLayout codeRow = row(EDITOR);
         editorArea = codeRow;
-        lineNumbers = label("1", 15, Color.rgb(38, 158, 203), false);
+        int fontSize = getPreferences(MODE_PRIVATE).getInt(FONT_SIZE_PREF, 15);
+        lineNumbers = label("1", fontSize, Color.rgb(38, 158, 203), false);
         lineNumbers.setTypeface(Typeface.MONOSPACE);
         lineNumbers.setGravity(Gravity.TOP | Gravity.RIGHT);
         lineNumbers.setPadding(0, dp(7), dp(15), dp(7));
@@ -621,7 +660,7 @@ public class MainActivity extends Activity {
         editor = code;
         completions = new EditorCompletionPopup(this, code);
         editor.setGravity(Gravity.TOP | Gravity.START);
-        editor.setTextSize(15);
+        editor.setTextSize(fontSize);
         editor.setTextColor(TEXT);
         editor.setHintTextColor(MUTED);
         editor.setHint("# 在这里编写 Python 代码");
