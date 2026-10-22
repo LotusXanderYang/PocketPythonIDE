@@ -6,9 +6,9 @@
 
 ## 下载
 
-当前公开的 APK 位于 [v0.1.1-beta.1](https://github.com/LotusXanderYang/PocketPythonIDE/releases/tag/v0.1.1-beta.1)。源码版本为 `0.1.2-beta.5`，可按下文构建；它修复了部分鸿蒙兼容环境中创建 `.py` 文件时被自动补上 `.txt` 的问题，并改进了编辑器输入。测试 APK 使用调试签名，适合在自己的设备上试用。首次打开 Python 环境时，应用会核对内置运行时的 SHA-256 并解包；后续运行直接使用已解包内容。
+从 [v0.1.2-beta.5 测试版](https://github.com/LotusXanderYang/PocketPythonIDE/releases/tag/v0.1.2-beta.5) 下载 APK。此版本修复了部分鸿蒙兼容环境中创建 `.py` 文件时被自动补上 `.txt` 的问题，并改进了编辑器输入。测试 APK 使用调试签名，适合在自己的设备上试用。首次打开 Python 环境时，应用会核对内置运行时的 SHA-256 并解包；后续运行直接使用已解包内容。
 
-APK 的 Python/PyTorch 运行时约 165 MB。为避免将大文件写入 Git 历史，`runtime.zip` 放在 v0.1.1 Release 的附件中，仓库保留 [哈希与依赖清单](app/src/main/assets/runtime.json)。
+APK 的 Python/PyTorch 运行时约 165 MB。为避免将大文件写入 Git 历史，`runtime.zip` 放在同一 Release 的附件中，仓库保留 [哈希与依赖清单](app/src/main/assets/runtime.json)。
 
 ## 功能
 
@@ -62,4 +62,4 @@ python .\tools\verify-device-runtime.py --serial <ADB设备序列号> --expect-p
 
 ---
 
-**English:** PocketPythonIDE is an experimental Android tablet IDE bundling CPython 3.14.6, CPU PyTorch 2.14.1, and NumPy 2.5.4 for ARM64. Source version 0.1.2-beta.5 adds offline Python completion, fixes `.py.txt` filenames in a HarmonyOS Android compatibility workspace, and improves indentation, delimiter pairing, and font controls. The latest published APK is v0.1.1-beta.1; build the current source with the pinned runtime asset and `build-local.ps1`. The app source is MIT licensed; bundled dependencies retain their own licenses.
+**English:** PocketPythonIDE is an experimental Android tablet IDE bundling CPython 3.14.6, CPU PyTorch 2.14.1, and NumPy 2.5.4 for ARM64. Version 0.1.2-beta.5 adds offline Python completion, fixes `.py.txt` filenames in a HarmonyOS Android compatibility workspace, and improves indentation, delimiter pairing, and font controls. Download the beta.5 APK and runtime asset from Releases, or fetch the pinned runtime and run `build-local.ps1`. The app source is MIT licensed; bundled dependencies retain their own licenses.
