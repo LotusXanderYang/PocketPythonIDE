@@ -4,9 +4,9 @@
 
 面向 ARM64 Android 平板的轻量代码工作台。IDE 本体只负责编辑、项目文件和任务界面；Python 与 C/C++ 的运行、构建和调试由用户自行安装并验证的独立语言包提供。
 
-**当前版本：`0.2.0-alpha.1`（测试版）** · Android API 26+ · ARM64
+**当前 IDE 版本：`0.2.0-alpha.2`（测试版）** · Android API 26+ · ARM64
 
-`main` 分支新增了外观选择和语言包易读名称，仍待实机验证；已发布的 `0.2.0-alpha.1` APK 尚不包含这些更新。
+`0.2.0-alpha.2` IDE 新增可视化代码配色预设、字体预设和易读的语言包名称。Python 与 C/C++ 包保持 `0.2.0-alpha.1`，可与新版 IDE 配合使用。
 
 > [Python · PyTorch Lab 已拆分为独立项目](https://github.com/LotusXanderYang/PocketPyTorchLab)。Lab 面向离线 CPU 小模型训练，不需要安装本 IDE。
 
@@ -27,11 +27,11 @@
 | [C/C++ 包](packs/cpp/README.md) | Clang/LLD 构建运行、补全、诊断、LLDB 调试 | 面向单目标课程项目；多文件配置使用 `.pocket-cpp.json` |
 | [Echo 示例包](sample-pack/README.md) | 语言包接口与权限边界示例 | 供接口开发和测试 |
 
-IDE 与两个正式语言包已在 BTK-W00 完成全新安装、工作区读写、自检和多文件 C 项目运行；Python 写回、C/C++ 调试另有 MAG-AN00 与 MRO-W00 实机记录。API 26 和 16 KB 内存页设备尚未完成实机验证。各项限制见对应组件 README 和 [阶段 9 验收记录](docs/STAGE9-RELEASE-PREFLIGHT-2026-10-31.md)。
+IDE 与两个正式语言包已在 BTK-W00 完成全新安装、工作区读写、自检和多文件 C 项目运行；Python 写回、C/C++ 调试另有 MAG-AN00 与 MRO-W00 实机记录。API 26 和 16 KB 内存页设备尚未完成实机验证。各项限制见对应组件 README 和 [阶段 9 验收记录](docs/STAGE9-FINAL-ACCEPTANCE-2026-10-31.md)。
 
 ## 安装与开始
 
-1. 从 [v0.2.0-alpha.1 Release](https://github.com/LotusXanderYang/PocketPythonIDE/releases/tag/v0.2.0-alpha.1) 下载 IDE APK，并按需下载 Python 或 C/C++ 语言包；核对 Release 中的 SHA-256 后安装。
+1. 从 [v0.2.0-alpha.2 Release](https://github.com/LotusXanderYang/PocketPythonIDE/releases/tag/v0.2.0-alpha.2) 下载 IDE APK，再按需从 [v0.2.0-alpha.1](https://github.com/LotusXanderYang/PocketPythonIDE/releases/tag/v0.2.0-alpha.1) 下载 Python 或 C/C++ 包；核对各页面的 SHA-256 后安装。
 2. 在 IDE 中选择“文件 → 打开文件夹”，授权一个实际可写的目录。鸿蒙兼容环境中，部分原生目录可能只能浏览，不能写入。
 3. 打开“语言包”，核对包名、签名与权限，执行“验证并启用”及“启用通过的能力”。打开 `.py`、`.c` 或 `.cpp` 文件后即可按已验证能力运行、构建或调试。
 

@@ -25,6 +25,7 @@ import java.util.Locale;
 
 /** Discovery is metadata-only; enabling still requires explicit user approval and a live handshake. */
 final class PackRegistry {
+    // Pack API v1 compatibility baseline; the app's release version may advance.
     static final String HOST_VERSION = "0.2.0-alpha.1";
     private final Context context;
     private Descriptor cachedEnabled;

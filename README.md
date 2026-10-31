@@ -4,9 +4,9 @@
 
 A lightweight coding workspace for ARM64 Android tablets. The IDE handles editing, project files, and task views; separately installed language packs provide Python and C/C++ execution, builds, and debugging.
 
-**Current version: `0.2.0-alpha.1` (preview)** · Android API 26+ · ARM64
+**Current IDE version: `0.2.0-alpha.2` (preview)** · Android API 26+ · ARM64
 
-The `main` branch includes appearance and language-pack label improvements awaiting device validation. The published `0.2.0-alpha.1` APK does not contain those newer changes.
+The `0.2.0-alpha.2` IDE adds visual syntax-color presets, font presets, and readable language-pack names. Python and C/C++ packs remain at `0.2.0-alpha.1` and work with this IDE.
 
 > [Pocket PyTorch Lab is a separate project](https://github.com/LotusXanderYang/PocketPyTorchLab). It is an offline CPU training app and does not require this IDE.
 
@@ -27,11 +27,11 @@ The `main` branch includes appearance and language-pack label improvements await
 | [C/C++ pack](packs/cpp/README.md) | Clang/LLD builds and execution, completion, diagnostics, LLDB debugging | Single-target course projects; multi-file projects use `.pocket-cpp.json` |
 | [Echo sample pack](sample-pack/README.md) | API and permission-boundary example | For pack developers and testing |
 
-The IDE and both published language packs passed fresh-install, writable-workspace, self-test, and multi-file C project checks on BTK-W00. Python file writeback and C/C++ debugging also have device records from MAG-AN00 and MRO-W00. Android API 26 and devices with 16 KB memory pages have not yet been tested. See each component's README and the [stage 9 acceptance record](docs/STAGE9-RELEASE-PREFLIGHT-2026-10-31.md) for the tested scope.
+The IDE and both published language packs passed fresh-install, writable-workspace, self-test, and multi-file C project checks on BTK-W00. Python file writeback and C/C++ debugging also have device records from MAG-AN00 and MRO-W00. Android API 26 and devices with 16 KB memory pages have not yet been tested. See each component's README and the [stage 9 acceptance record](docs/STAGE9-FINAL-ACCEPTANCE-2026-10-31.md) for the tested scope.
 
 ## Install and get started
 
-1. Download the IDE APK and whichever language packs you need from the [v0.2.0-alpha.1 release](https://github.com/LotusXanderYang/PocketPythonIDE/releases/tag/v0.2.0-alpha.1). Check the SHA-256 values on that page before installing.
+1. Download the IDE APK from the [v0.2.0-alpha.2 release](https://github.com/LotusXanderYang/PocketPythonIDE/releases/tag/v0.2.0-alpha.2) and whichever language packs you need from [v0.2.0-alpha.1](https://github.com/LotusXanderYang/PocketPythonIDE/releases/tag/v0.2.0-alpha.1). Check the SHA-256 values on those pages before installing.
 2. In the IDE, choose **File → Open Folder** (`文件 → 打开文件夹`) and grant access to a writable folder. In some HarmonyOS Android compatibility environments, native folders can be browsed but reject writes.
 3. Open **Language Packs** (`语言包`), review the package name, signature, and permissions, then run **Verify and Enable** (`验证并启用`) and **Enable Passed Capabilities** (`启用通过的能力`). Open a `.py`, `.c`, or `.cpp` file to use the capabilities that passed verification.
 
