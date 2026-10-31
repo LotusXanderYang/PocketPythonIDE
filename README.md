@@ -1,41 +1,43 @@
+**English** | [简体中文](README.zh-CN.md)
+
 # Pocket Android IDE
 
-面向 ARM64 Android 平板的轻量代码工作台。IDE 本体只负责编辑、项目文件和任务界面；Python 与 C/C++ 的运行、构建和调试由用户自行安装并验证的独立语言包提供。
+A lightweight coding workspace for ARM64 Android tablets. The IDE handles editing, project files, and task views; separately installed language packs provide Python and C/C++ execution, builds, and debugging.
 
-**当前版本：`0.2.0-alpha.1`（测试版）** · Android API 26+ · ARM64
+**Current version: `0.2.0-alpha.1` (preview)** · Android API 26+ · ARM64
 
-> [Python · PyTorch Lab 已拆分为独立项目](https://github.com/LotusXanderYang/PocketPyTorchLab)。Lab 面向离线 CPU 小模型训练，不需要安装本 IDE。
+> [Pocket PyTorch Lab is a separate project](https://github.com/LotusXanderYang/PocketPyTorchLab). It is an offline CPU training app and does not require this IDE.
 
-## 亮点
+## Highlights
 
-- **按需安装语言能力**：IDE 基础 APK 约 268 KB，不捆绑 Python、PyTorch 或 C/C++ 工具链。安装语言包后，IDE 会检查签名、权限与能力并运行自检，通过后才开放对应操作。
-- **从编辑到调试都在工作台内**：文件树、标签页、搜索、输出/问题/构建记录和任务状态集中显示。调试支持断点、单步、继续、暂停、变量与调用栈；失败和异常能定位到源码。
-- **适合触屏，也支持实体键盘**：长按文件可删除，补全可点选；支持缩进、括号配对、保存快捷键、自定义字体及代码高亮配色。
-- **工作区由用户选择**：通过 Android 系统文件选择器授权可写文件夹。运行前复制项目快照，写回时检测外部修改，避免覆盖用户同时编辑的文件。
-- **开放语言包接口**：第三方可按 [Language Pack API v1](docs/language-pack-api/v1/README.md) 和 [SDK](pack-sdk/README.md) 制作独立 APK；[静态目录](docs/language-pack-index.json)只列真实发布并校验过的语言包。
+- **Install only the languages you need.** The base IDE APK is about 268 KB and contains no Python, PyTorch, or C/C++ toolchain. Before enabling a language pack, the IDE checks its identity, signature, permissions, declared capabilities, and on-device self-tests.
+- **Edit and debug in one workspace.** A file tree, tabs, search, output, problems, build logs, and task status sit alongside debugging controls. Debugging supports breakpoints, stepping, continue, pause, variables, call stacks, and source locations for errors.
+- **Designed for touch and physical keyboards.** Long-press a file to delete it or tap a completion suggestion. The editor also supports indentation, paired delimiters, save shortcuts, imported fonts, and custom syntax colors.
+- **Choose your own project folder.** Grant a writable folder through Android's system file picker. Runs use a project snapshot; before writing results back, the IDE checks for external edits to avoid overwriting them.
+- **Open language-pack API.** Third-party developers can build standalone APKs with [Language Pack API v1](docs/language-pack-api/v1/README.md) and the [SDK](pack-sdk/README.md). The [static pack index](docs/language-pack-index.json) lists only published, verified packages.
 
-## 当前版本的能力
+## What this version supports
 
-| 组件 | 已提供 | 范围 |
+| Component | Available now | Scope |
 | --- | --- | --- |
-| IDE | 文件与项目编辑、SAF 工作区、主题/背景/字体/高亮设置、任务与调试界面 | 本体不运行代码 |
-| [Python 包](packs/python/README.md) | CPython 3.14.6 运行、补全、诊断、DAP 调试、取消 | 不含 PyTorch、NumPy 或通用 `pip install` |
-| [C/C++ 包](packs/cpp/README.md) | Clang/LLD 构建运行、补全、诊断、LLDB 调试 | 面向单目标课程项目；多文件配置使用 `.pocket-cpp.json` |
-| [Echo 示例包](sample-pack/README.md) | 语言包接口与权限边界示例 | 供接口开发和测试 |
+| IDE | Project editing, SAF workspaces, appearance settings, task and debug UI | Cannot execute code on its own |
+| [Python pack](packs/python/README.md) | CPython 3.14.6 execution, completion, diagnostics, DAP debugging, cancellation | No PyTorch, NumPy, or general `pip install` |
+| [C/C++ pack](packs/cpp/README.md) | Clang/LLD builds and execution, completion, diagnostics, LLDB debugging | Single-target course projects; multi-file projects use `.pocket-cpp.json` |
+| [Echo sample pack](sample-pack/README.md) | API and permission-boundary example | For pack developers and testing |
 
-IDE 与两个正式语言包已在 BTK-W00 完成全新安装、工作区读写、自检和多文件 C 项目运行；Python 写回、C/C++ 调试另有 MAG-AN00 与 MRO-W00 实机记录。API 26 和 16 KB 内存页设备尚未完成实机验证。各项限制见对应组件 README 和 [阶段 9 验收记录](docs/STAGE9-RELEASE-PREFLIGHT-2026-10-31.md)。
+The IDE and both published language packs passed fresh-install, writable-workspace, self-test, and multi-file C project checks on BTK-W00. Python file writeback and C/C++ debugging also have device records from MAG-AN00 and MRO-W00. Android API 26 and devices with 16 KB memory pages have not yet been tested. See each component's README and the [stage 9 acceptance record](docs/STAGE9-RELEASE-PREFLIGHT-2026-10-31.md) for the tested scope.
 
-## 安装与开始
+## Install and get started
 
-1. 从 [v0.2.0-alpha.1 Release](https://github.com/LotusXanderYang/PocketPythonIDE/releases/tag/v0.2.0-alpha.1) 下载 IDE APK，并按需下载 Python 或 C/C++ 语言包；核对 Release 中的 SHA-256 后安装。
-2. 在 IDE 中选择“文件 → 打开文件夹”，授权一个实际可写的目录。鸿蒙兼容环境中，部分原生目录可能只能浏览，不能写入。
-3. 打开“语言包”，核对包名、签名与权限，执行“验证并启用”及“启用通过的能力”。打开 `.py`、`.c` 或 `.cpp` 文件后即可按已验证能力运行、构建或调试。
+1. Download the IDE APK and whichever language packs you need from the [v0.2.0-alpha.1 release](https://github.com/LotusXanderYang/PocketPythonIDE/releases/tag/v0.2.0-alpha.1). Check the SHA-256 values on that page before installing.
+2. In the IDE, choose **File → Open Folder** (`文件 → 打开文件夹`) and grant access to a writable folder. In some HarmonyOS Android compatibility environments, native folders can be browsed but reject writes.
+3. Open **Language Packs** (`语言包`), review the package name, signature, and permissions, then run **Verify and Enable** (`验证并启用`) and **Enable Passed Capabilities** (`启用通过的能力`). Open a `.py`, `.c`, or `.cpp` file to use the capabilities that passed verification.
 
-新 IDE 的包名是 `com.example.pocketandroidide`，可与[旧版 `v0.1.2-beta.5`](https://github.com/LotusXanderYang/PocketPythonIDE/releases/tag/v0.1.2-beta.5)并存。旧应用的私有文件不会自动迁移；请从新 IDE 重新授权原 SAF 工作区。覆盖同包名安装时须保持签名一致，卸载前先备份应用私有文件。`v0.2.0-alpha.1` Release 是拆分前的历史发布，仍包含 Lab APK；Lab 今后的源码和发布以其[独立仓库](https://github.com/LotusXanderYang/PocketPyTorchLab)为准。
+The new IDE's package ID is `com.example.pocketandroidide`, so it can coexist with the [earlier `v0.1.2-beta.5` app](https://github.com/LotusXanderYang/PocketPythonIDE/releases/tag/v0.1.2-beta.5). Private files from that app do not migrate automatically; grant the SAF workspace again in the new IDE. An in-place update requires a matching signing key. Back up private files before uninstalling. The `v0.2.0-alpha.1` release predates the repository split and still contains a Lab APK; future Lab source and releases are maintained in the [Lab repository](https://github.com/LotusXanderYang/PocketPyTorchLab).
 
-## 从源码构建
+## Build from source
 
-需要 JDK 17、Android SDK Platform 35 和 Gradle 8.13。仓库含 Gradle wrapper；语言包运行时与工具链按各自锁定清单准备，不提交大型二进制到 Git。
+You need JDK 17, Android SDK Platform 35, and Gradle 8.13. A Gradle wrapper is included. Large language runtimes and toolchains are prepared from their pinned manifests rather than committed to Git.
 
 ```powershell
 git clone https://github.com/LotusXanderYang/PocketPythonIDE.git
@@ -45,6 +47,6 @@ cd PocketPythonIDE
 .\build-local.ps1 -Product sample
 ```
 
-C/C++ 包的固定工具链与构建步骤见[组件说明](packs/cpp/README.md)；第三方组件的归档、源码与许可线索见[第三方源码指引](docs/THIRD-PARTY-SOURCE.md)。独立 Lab 的构建方法见[Lab 仓库](https://github.com/LotusXanderYang/PocketPyTorchLab)。旧一体化源码保留在 `v0.2.0-alpha.1` 标签和原提交历史中。
+See the [C/C++ pack guide](packs/cpp/README.md) for its pinned toolchain and build steps, the [third-party source guide](docs/THIRD-PARTY-SOURCE.md) for archive and license provenance, and the [Lab repository](https://github.com/LotusXanderYang/PocketPyTorchLab) for its independent build. The former combined source remains available in the `v0.2.0-alpha.1` tag and earlier commits.
 
-本项目自有源码采用 [MIT License](LICENSE)。语言包及内嵌工具链的第三方许可证见各包声明；旧版一体化运行时声明见[历史说明](THIRD_PARTY_NOTICES.md)。
+Project-owned source is under the [MIT License](LICENSE). Bundled tools and language-pack dependencies retain their own licenses; the earlier combined runtime is documented in the [historical notices](THIRD_PARTY_NOTICES.md).
