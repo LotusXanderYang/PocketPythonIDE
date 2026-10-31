@@ -1,5 +1,5 @@
 param(
-    [ValidateSet('ide', 'lab', 'sample', 'python', 'all')]
+    [ValidateSet('ide', 'sample', 'python', 'all')]
     [string]$Product = 'ide'
 )
 
@@ -18,14 +18,10 @@ if (Test-Path (Join-Path $localSdk 'platforms/android-35/android.jar')) {
 }
 if (-not $env:ANDROID_HOME) { throw 'Android SDK API 35 is required. Set ANDROID_HOME.' }
 
-if ($Product -eq 'lab' -or $Product -eq 'python' -or $Product -eq 'all') {
+if ($Product -eq 'python' -or $Product -eq 'all') {
     $python = if ($env:PYTHON -and (Test-Path -LiteralPath $env:PYTHON)) { $env:PYTHON }
         elseif (Test-Path 'D:\Anaconda\python.exe') { 'D:\Anaconda\python.exe' }
         else { (Get-Command python -ErrorAction Stop).Source }
-    if ($Product -eq 'lab' -or $Product -eq 'all') {
-        & $python (Join-Path $projectRoot 'tools/rebase-lab-runtime.py')
-        if ($LASTEXITCODE -ne 0) { throw "Lab runtime preparation failed: $LASTEXITCODE" }
-    }
     if ($Product -eq 'python' -or $Product -eq 'all') {
         & $python (Join-Path $projectRoot 'packs/python/prepare_runtime.py')
         if ($LASTEXITCODE -ne 0) { throw "Python pack runtime preparation failed: $LASTEXITCODE" }
@@ -42,7 +38,6 @@ if (Test-Path $localGradle) {
     $gradleArgs = @('--no-daemon')
 }
 if ($Product -eq 'ide' -or $Product -eq 'all') { $gradleArgs += ':ide:assembleDebug' }
-if ($Product -eq 'lab' -or $Product -eq 'all') { $gradleArgs += ':lab:assembleDebug' }
 if ($Product -eq 'sample' -or $Product -eq 'all') { $gradleArgs += ':sample-pack:assembleDebug' }
 if ($Product -eq 'sample' -or $Product -eq 'all') { $gradleArgs += ':pack-probe:assembleDebug' }
 if ($Product -eq 'python' -or $Product -eq 'all') { $gradleArgs += ':packs:python:assembleDebug' }
@@ -53,7 +48,7 @@ try {
     if ($LASTEXITCODE -ne 0) { throw "Gradle failed: $LASTEXITCODE" }
 } finally { Pop-Location }
 
-$modules = if ($Product -eq 'all') { @('ide', 'lab', 'sample-pack', 'pack-probe', 'packs/python') }
+$modules = if ($Product -eq 'all') { @('ide', 'sample-pack', 'pack-probe', 'packs/python') }
     elseif ($Product -eq 'sample') { @('sample-pack', 'pack-probe') } else { @($Product) }
 if ($Product -eq 'python') { $modules = @('packs/python') }
 foreach ($module in $modules) {

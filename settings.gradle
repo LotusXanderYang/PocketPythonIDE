@@ -16,7 +16,7 @@ dependencyResolutionManagement {
 
 rootProject.name = 'PocketPythonIDE'
 // The beta.5 :app source and its APK stay in the checkout as the rollback baseline.
-include ':workbench', ':ide', ':lab', ':pack-sdk', ':sample-pack', ':pack-probe'
+include ':workbench', ':ide', ':pack-sdk', ':sample-pack', ':pack-probe'
 include ':packs:cpp:exec-probe'
 include ':packs:cpp'
 include ':packs:python'
