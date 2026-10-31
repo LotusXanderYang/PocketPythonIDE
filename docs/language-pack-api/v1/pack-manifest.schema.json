@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/LotusXanderYang/PocketPythonIDE/blob/main/docs/language-pack-api/v1/pack-manifest.schema.json",
+  "title": "Pocket IDE executable language pack manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "packId", "version", "minHostVersion", "minSdk", "supportedAbis", "languageIds", "extensions", "capabilities", "entryService", "source", "license", "dependencies", "selfTests"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "packId": {"type": "string", "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$"},
+    "version": {"type": "string", "minLength": 1, "maxLength": 64},
+    "minHostVersion": {"type": "string", "const": "0.2.0-alpha.1"},
+    "minSdk": {"type": "integer", "minimum": 26},
+    "supportedAbis": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"enum": ["arm64-v8a", "armeabi-v7a", "x86_64", "x86"]}},
+    "languageIds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^[a-z][a-z0-9-]*$"}},
+    "extensions": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^\\.[a-z0-9_]+$"}},
+    "capabilities": {"type": "array", "minItems": 2, "uniqueItems": true, "contains": {"const": "initialize"}, "items": {"enum": ["initialize", "analyze", "complete", "build", "run", "cancel", "diagnostics", "debug"]}},
+    "entryService": {"type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*(\\.[A-Za-z_][A-Za-z0-9_]*)+$"},
+    "debugAdapter": {"type": "object", "additionalProperties": false, "required": ["protocol", "transport", "service"], "properties": {"protocol": {"const": "dap-1"}, "transport": {"const": "binder-socketpair"}, "service": {"type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*(\\.[A-Za-z_][A-Za-z0-9_]*)+$"}}},
+    "warmupActivity": {"type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*(\\.[A-Za-z_][A-Za-z0-9_]*)+$"},
+    "workspaceOutput": {"enum": ["changes-v1"]},
+    "source": {"type": "string", "pattern": "^https://", "maxLength": 2048},
+    "license": {"type": "string", "minLength": 1},
+    "dependencies": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["name", "version", "license"], "properties": {"name": {"type": "string", "minLength": 1}, "version": {"type": "string", "minLength": 1}, "license": {"type": "string", "minLength": 1}}}},
+    "selfTests": {"type": "object", "additionalProperties": {"type": "object", "additionalProperties": false, "properties": {"source": {"type": "string"}, "helper": {"type": "string"}, "entryPath": {"type": "string"}, "secondaryPath": {"type": "string"}, "secondarySource": {"type": "string"}, "pauseSource": {"type": "string"}, "breakpointLine": {"type": "integer", "minimum": 1}, "variableName": {"type": "string"}, "variableValue": {"type": "string"}, "exceptionLine": {"type": "integer", "minimum": 1}, "exceptionId": {"type": "string"}, "exitCode": {"type": "integer"}, "operation": {"enum": ["analyze", "complete", "build", "run", "diagnostics"]}, "expectStatus": {"enum": ["ok", "error", "cancelled", "unsupported"]}, "expectOutput": {"type": "string"}, "expectErrorCode": {"type": "string"}, "expectLine": {"type": "integer", "minimum": 1}, "expectColumn": {"type": "integer", "minimum": 1}, "minBytes": {"type": "integer", "minimum": 1}}}}
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "standard": "c++20",
+  "sources": ["stage5_cpp_course/main.cpp", "stage5_cpp_course/answer.cpp"],
+  "includeDirs": ["stage5_cpp_course"],
+  "args": []
+}

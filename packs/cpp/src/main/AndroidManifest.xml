@@ -1,0 +1,20 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application android:allowBackup="false" android:label="Pocket C/C++ 语言包">
+        <activity android:name=".CppInfoActivity" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".CppWarmupActivity" android:exported="true"
+            android:theme="@android:style/Theme.NoDisplay" />
+        <service android:name=".CppPackService" android:exported="true"
+            android:process=":compiler">
+            <intent-filter>
+                <action android:name="org.pocketide.pack.v1.LANGUAGE_PACK" />
+            </intent-filter>
+            <meta-data android:name="org.pocketide.pack.v1.MANIFEST"
+                android:resource="@raw/pack_manifest" />
+        </service>
+    </application>
+</manifest>

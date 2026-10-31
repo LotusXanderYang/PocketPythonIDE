@@ -10,6 +10,12 @@ local.properties
 **/__pycache__/
 app/src/main/assets/runtime.zip
 app/src/main/assets/runtime.zip.download
+lab/src/main/assets/runtime.zip
+packs/cpp/src/main/assets/toolchain.zip
+packs/python/src/main/assets/runtime.zip
+packs/cpp/src/main/jniLibs/arm64-v8a/libclang_exec.so
+packs/cpp/src/main/jniLibs/arm64-v8a/liblld_exec.so
+packs/cpp/src/main/jniLibs/arm64-v8a/libc++_shared.so
 
 # Local build and device history; public build instructions live in README.md.
 docs/BUILD-CHECKPOINT-*.md

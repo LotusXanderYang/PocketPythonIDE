@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <application android:allowBackup="false" android:icon="@drawable/ic_launcher"
+        android:label="Python · PyTorch Lab" android:theme="@android:style/Theme.Material.NoActionBar">
+        <activity android:name="com.example.pocketpythonide.LabHomeActivity"
+            android:exported="true" android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name="com.example.pocketpythonide.LabActivity"
+            android:exported="false" android:windowSoftInputMode="adjustResize" />
+        <service android:name="com.example.pocketpythonide.LabRuntimeService"
+            android:process=":python" android:exported="false"
+            android:foregroundServiceType="dataSync" />
+    </application>
+</manifest>

@@ -1,0 +1,17 @@
+{
+  "app_id": "com.example.pocketpythonstd",
+  "python": "3.14.6",
+  "asset": "runtime.zip",
+  "asset_sha256": "339cdbdd070f106abcb36830389a5817402fc4e700d79ed38a958ade9a0a78dd",
+  "asset_bytes": 11255268,
+  "source_asset_sha256": "45e7c3baa507b2c6b6d8b0338b5ef22d947b4cfed6e618234a5f57f4f527f7a4",
+  "bridge_sha256": "f389baab3cd1013da8f1d74aff7e2f3e27788ed31c860d01f8d7b6bd02373d7e",
+  "source_manifest": "app/src/main/assets/runtime.json",
+  "native_dependency_count": 17,
+  "included_files": 684,
+  "excluded": [
+    "torch",
+    "numpy",
+    "all third-party site-packages"
+  ]
+}

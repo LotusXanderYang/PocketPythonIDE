@@ -1,0 +1,22 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application android:allowBackup="false" android:label="Pocket Python 基础语言包">
+        <activity android:name="org.pocketide.python.PythonInfoActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name="org.pocketide.python.PythonWarmupActivity"
+            android:exported="true" android:theme="@android:style/Theme.NoDisplay" />
+        <service android:name="org.pocketide.python.PythonPackService"
+            android:exported="true" android:process=":python">
+            <intent-filter>
+                <action android:name="org.pocketide.pack.v1.LANGUAGE_PACK" />
+                <action android:name="org.pocketide.pack.debug.v1.DEBUG_PACK" />
+            </intent-filter>
+            <meta-data android:name="org.pocketide.pack.v1.MANIFEST"
+                android:resource="@raw/pack_manifest" />
+        </service>
+    </application>
+</manifest>

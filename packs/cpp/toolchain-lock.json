@@ -1,0 +1,156 @@
+{
+  "repository": "https://packages-cf.termux.dev/apt/termux-main",
+  "architecture": "aarch64",
+  "root": "clang",
+  "packages_gz_sha256": "eb14f03facaed9678e8b9b9c2bdf78ece1dd36740297cd46e12341ed5af177e2",
+  "archive_total_bytes": 86787304,
+  "installed_total_kib": 518388,
+  "packages": {
+    "clang": {
+      "version": "21.1.8-3",
+      "archive_bytes": 30740228,
+      "installed_kib": 186820,
+      "sha256": "9fb565013b96ce10abd8f8f217aaebb48f72873f53acbf8886329bcea841a21c",
+      "filename": "pool/main/c/clang/clang_21.1.8-3_aarch64.deb",
+      "depends": [
+        "libcompiler-rt",
+        "lld",
+        "llvm",
+        "ndk-sysroot",
+        "libllvm"
+      ]
+    },
+    "libandroid-glob": {
+      "version": "0.6-3",
+      "archive_bytes": 7032,
+      "installed_kib": 64,
+      "sha256": "2276ae8adedf0db76c2f4ffc94cc4cceb2f4f5d78e021b54e2e046d1233e7826",
+      "filename": "pool/main/liba/libandroid-glob/libandroid-glob_0.6-3_aarch64.deb",
+      "depends": []
+    },
+    "libc++": {
+      "version": "30",
+      "archive_bytes": 341604,
+      "installed_kib": 1432,
+      "sha256": "53d0b84a7ba7459024257cb94d5b136fe13ef858567f65a8064b35950799f2ca",
+      "filename": "pool/main/libc/libc++/libc++_30_aarch64.deb",
+      "depends": []
+    },
+    "libcompiler-rt": {
+      "version": "21.1.8-3",
+      "archive_bytes": 3024604,
+      "installed_kib": 34020,
+      "sha256": "89de02f642e34fa6494ad16105bd08510bd1dbdbe4fdb2b297aaa4f4e8e534b6",
+      "filename": "pool/main/libc/libcompiler-rt/libcompiler-rt_21.1.8-3_aarch64.deb",
+      "depends": [
+        "libc++"
+      ]
+    },
+    "libffi": {
+      "version": "3.8.0",
+      "archive_bytes": 37592,
+      "installed_kib": 240,
+      "sha256": "4f255badf74cd31f6a2801c17fa1444199c84c834b517b7c843e2fe9ebe91d77",
+      "filename": "pool/main/libf/libffi/libffi_3.8.0_aarch64.deb",
+      "depends": []
+    },
+    "libiconv": {
+      "version": "1.19",
+      "archive_bytes": 562724,
+      "installed_kib": 1216,
+      "sha256": "fe9481b1dc101c6c3552943f25435109fd522aecc615ae49594f9fbee863bb37",
+      "filename": "pool/main/libi/libiconv/libiconv_1.19_aarch64.deb",
+      "depends": []
+    },
+    "libllvm": {
+      "version": "21.1.8-3",
+      "archive_bytes": 30733892,
+      "installed_kib": 169564,
+      "sha256": "5056a73f2645fc9c0759e6f94a1bd6edcf36305acaef58dc685211ced9cc2a02",
+      "filename": "pool/main/libl/libllvm/libllvm_21.1.8-3_aarch64.deb",
+      "depends": [
+        "libc++",
+        "libffi",
+        "libxml2",
+        "ncurses",
+        "zlib",
+        "zstd"
+      ]
+    },
+    "liblzma": {
+      "version": "5.8.4",
+      "archive_bytes": 194796,
+      "installed_kib": 872,
+      "sha256": "44e95e6e60dddb3705e60a344a4f009a1085a210797342b721eaff41b44033c0",
+      "filename": "pool/main/libl/liblzma/liblzma_5.8.4_aarch64.deb",
+      "depends": []
+    },
+    "libxml2": {
+      "version": "2.15.4-1",
+      "archive_bytes": 442652,
+      "installed_kib": 1648,
+      "sha256": "d315861bbcf716cfb088f53cddab9fb6a96430cc66769f79774cc69c2f53bcff",
+      "filename": "pool/main/libx/libxml2/libxml2_2.15.4-1_aarch64.deb",
+      "depends": [
+        "libandroid-glob",
+        "libiconv",
+        "zlib"
+      ]
+    },
+    "lld": {
+      "version": "21.1.8-3",
+      "archive_bytes": 2812212,
+      "installed_kib": 20324,
+      "sha256": "6299c8fdff59dcff972f6b444805bcdb211c2bd797a64d2ddb3875e699f30630",
+      "filename": "pool/main/l/lld/lld_21.1.8-3_aarch64.deb",
+      "depends": [
+        "libllvm"
+      ]
+    },
+    "llvm": {
+      "version": "21.1.8-3",
+      "archive_bytes": 14911960,
+      "installed_kib": 70576,
+      "sha256": "2d17e4dde485cae71e6872d19ce1d44555789208708b4e0fd15ebf6818a146d3",
+      "filename": "pool/main/l/llvm/llvm_21.1.8-3_aarch64.deb",
+      "depends": [
+        "libllvm"
+      ]
+    },
+    "ncurses": {
+      "version": "6.6.20260307+really6.5.20250830",
+      "archive_bytes": 557792,
+      "installed_kib": 1604,
+      "sha256": "f44bbfdc3d42ec0217bffa978309390e59cea5a48a9a83226d4a496c42ad0b99",
+      "filename": "pool/main/n/ncurses/ncurses_6.6.20260307+really6.5.20250830_aarch64.deb",
+      "depends": []
+    },
+    "ndk-sysroot": {
+      "version": "30",
+      "archive_bytes": 1996888,
+      "installed_kib": 28436,
+      "sha256": "73502f9b04fce210c430c83bf9ae2b8e332ba5c319f3eb94a61ba5cef090f787",
+      "filename": "pool/main/n/ndk-sysroot/ndk-sysroot_30_aarch64.deb",
+      "depends": []
+    },
+    "zlib": {
+      "version": "1.3.2",
+      "archive_bytes": 62840,
+      "installed_kib": 264,
+      "sha256": "75e7d0af17fcc3b40004309fdc00a1ddb9ae08346dce5e269902c34ac3966ac9",
+      "filename": "pool/main/z/zlib/zlib_1.3.2_aarch64.deb",
+      "depends": []
+    },
+    "zstd": {
+      "version": "1.5.7-1",
+      "archive_bytes": 360488,
+      "installed_kib": 1308,
+      "sha256": "e1b4a5113648da8de189620ba1fce74c48b2d0833d9043391b9a1c91fb606fd3",
+      "filename": "pool/main/z/zstd/zstd_1.5.7-1_aarch64.deb",
+      "depends": [
+        "liblzma",
+        "zlib"
+      ]
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "source": "https://packages-cf.termux.dev/apt/termux-main",
+  "lock": "packs/cpp/toolchain-lock.json",
+  "prefix_from": "com.termux",
+  "prefix_to": "org.idecpp",
+  "asset_sha256": "ec84b08b52b25c4cd36dba8e99db3e6204e3763936564bf6b5ac8dc45aa095e3",
+  "asset_bytes": 100532972,
+  "asset_files": 4405,
+  "compiler_sha256": "8a41c083710a7c17d8e624db187d4d2a0dfc8407e156e3b989d37a1c8ac1be85",
+  "linker_sha256": "863e74165ef55a3b604ff31eac0b972007949f940f0a1301110fab1a8a66ea56",
+  "lldb_dap_sha256": "81bee62fe7683cfcfe67fc8bcc8960509761251fc79ba8b86f1b110510335c46",
+  "lldb_server_sha256": "a0c9b301d1037603d58a080bc17170b3282deec24dbfd369b94e443c5cc96136"
+}

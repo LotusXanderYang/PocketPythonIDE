@@ -1,0 +1,7 @@
+{
+  "standard": "c17",
+  "sources": ["stage5_c_course/main.c", "stage5_c_course/answer.c"],
+  "includeDirs": ["stage5_c_course"],
+  "stdin": "21\n",
+  "args": []
+}

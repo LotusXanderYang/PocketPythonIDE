@@ -1,0 +1,1 @@
+{"schemaVersion":1,"packs":[{"packId":"org.pocketide.sample.echo","version":"1.0.0","apkUrl":"http://insecure.invalid/pack.apk","apkSha256":"not-a-hash","signingCertificateSha256":"missing","apkBytes":0,"minSdk":21,"supportedAbis":["windows-x64"],"source":"file:///tmp/source","license":""}]}

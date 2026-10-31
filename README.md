@@ -1,4 +1,14 @@
-# PocketPythonIDE · 0.1.2 Beta
+# Pocket Android IDE / Python · PyTorch Lab
+
+当前开发工作区有两个独立 Android 应用：通用 [IDE](ide/) 和 [Python · PyTorch Lab](lab/)。IDE 可安装经验证的语言包；阶段 5 的 [C/C++ 包](packs/cpp/)已在 ARM64 Android 实机完成课程样例、编译错误、取消、超时等验证。阶段 6 的独立 [Python 基础包](packs/python/)已在 MRO-W00 的 Android 兼容环境通过实机验收；范围见[兼容说明](docs/python-pack-compatibility.md)及[阶段 6 验收](docs/STAGE6-ACCEPTANCE-2026-10-25.md)。Lab 的阶段 7 离线 CPU 训练流程已在 MAG-AN00 实机完成验证；使用方法和支持边界见 [Lab 说明](lab/README.md)与[阶段 7 验收](docs/STAGE7-ACCEPTANCE-2026-10-25.md)。阶段 8 的 Python 包 DAP 调试在 MAG-AN00 上通过断点、单步、变量、多文件、异常与退出测试；C/C++ 调试已在 MAG-AN00 与 MRO-W00 验证断点和调用栈，MRO-W00 还验证了运行中暂停及 C++ 异常停止，详见[阶段 8 C/C++ 实机记录](docs/STAGE8-CPP-DEBUG-HARMONY-FIX-2026-10-31.md)。此前进度和阶段 5 证据见[阶段性报告](docs/PROGRESS-REPORT-2026-10-25.md)及[阶段 5 验收](docs/STAGE5-ACCEPTANCE-2026-10-25.md)。
+
+调试 APK 可在[本地 artifacts 目录](artifacts/)找到；旧版 `v0.1.2-beta.5` 仍是公开 Release 和回退锚点，新版调试包尚未发布。IDE、Lab 和旧版使用不同包名；覆盖安装新版 IDE 请保留原应用数据，不要先卸载。不同应用的私有脚本不会自动互通，SAF 工作区需分别授权。语言包协议见 [API v1](docs/language-pack-api/v1/README.md)，SDK 源码与调试 AAR 见 [pack-sdk](pack-sdk/README.md)。
+
+新版的安装顺序、各 APK 的精确大小与哈希、签名、实测范围和发布前缺口见[阶段 9 清单](docs/STAGE9-RELEASE-PREFLIGHT-2026-10-31.md)。[IDE 使用说明](ide/README.md)、[Lab 使用说明](lab/README.md)、[Python 包](packs/python/README.md)与[C/C++ 包](packs/cpp/README.md)分别列出各自的能力和限制。公开[静态语言包目录](docs/language-pack-index.json)目前为空；本地测试候选不会伪装成已发布下载。
+
+第三方运行时的固定归档、构建配方、许可证及源码获取途径见[第三方源码指引](docs/THIRD-PARTY-SOURCE.md)。
+
+## 已发布旧版：PocketPythonIDE 0.1.2 Beta
 
 面向 Android 平板的离线 Python IDE。内置 ARM64 版 **CPython 3.14.6、PyTorch 2.14.1（CPU）和 NumPy 2.5.4**，在设备本地执行脚本。界面采用深色工作区、文件侧栏、标签页、代码小地图和底部输出面板；应用标志与图标由本项目设计。
 
@@ -29,18 +39,30 @@ APK 的 Python/PyTorch 运行时约 165 MB。为避免将大文件写入 Git 历
 ```powershell
 git clone https://github.com/LotusXanderYang/PocketPythonIDE.git
 cd PocketPythonIDE
+.\tools\fetch-runtime.ps1   # 若本地尚无已校验的 beta.5 runtime.zip
+.\build-local.ps1 -Product ide   # 不打包 Python/PyTorch 运行时
+.\build-local.ps1 -Product lab   # 从 beta.5 运行时生成 Lab 专属前缀，再单独构建
+.\build-local.ps1 -Product sample # 构建 API v1 示例包及权限测试包，不重建 Lab
+.\build-local.ps1 -Product python # 验证固定运行时并构建独立 Python 基础包
+.\build-local.ps1 -Product all   # 构建 IDE、Lab、Python 包和阶段 3 的两个测试 APK
+```
+
+当前工作区的调试产物分别位于 `ide/build/outputs/apk/debug/ide-debug.apk` 和 `lab/build/outputs/apk/debug/lab-debug.apk`。下方 beta.5 的旧版说明仍适用于该 Release 标签；若要复现旧版，请在**另一个目录**检出 `v0.1.2-beta.5` 并使用其构建说明，不要覆盖本工作区已有缓存或 APK。
+
+```powershell
+# 以下两行仅适用于单独检出的 beta.5 标签源码
 .\tools\fetch-runtime.ps1   # 下载 Release 中的运行时并按 runtime.json 校验
 .\build-local.ps1
 ```
 
-产物位于 `app/build/outputs/apk/debug/app-debug.apk`。构建脚本优先使用工作区 `.toolchain/` 中的已安装工具；公共克隆可通过 `JAVA_HOME`、`ANDROID_HOME` 和 Gradle wrapper 使用系统工具。调试签名在每台开发机上可能不同，跨签名升级时须先导出自己的脚本。
+beta.5 产物位于 `app/build/outputs/apk/debug/app-debug.apk`。构建脚本优先使用工作区 `.toolchain/` 中的已安装工具；公共克隆可通过 `JAVA_HOME`、`ANDROID_HOME` 和 Gradle wrapper 使用系统工具。调试签名在每台开发机上可能不同，跨签名升级时须先导出自己的脚本。
 
 如要从源代码重新编译 Python/PyTorch，而不是使用 Release 的运行时附件：
 
 1. 在 Linux 或 WSL2 安装 Docker、Git、Python 3；运行 `tools/setup-linux-builder.sh`。
 2. `tools/build-modern-runtime.sh` 会检出固定的 [Termux packages 提交](https://github.com/termux/termux-packages/commit/6be420e7536d1e228f3ffee2eb74ca2736a73fc1)，应用 [续编补丁](packaging/termux/python-torch-resume.patch)，以应用专属前缀构建 ARM64 `.deb`。该步骤需要较长时间和充足磁盘/内存。
 3. 将目标 `.deb` 放到 `.toolchain/runtime-debs/`，九个纯 Python wheel 放到 `.toolchain/pure-wheels/`；按 [固定哈希清单](packaging/pure-wheels.sha256)核对 wheel，然后在 WSL2 运行 `tools/assemble-modern-runtime.sh`。
-4. 运行 `.\build-local.ps1`。组装器会审计包版本、应用前缀、Python ABI、依赖闭包及 ARM64 ELF 的 16 KB 装载对齐，并生成 `runtime.json`。
+4. 在 beta.5 标签源码中运行 `.\build-local.ps1`。组装器会审计包版本、应用前缀、Python ABI、依赖闭包及 ARM64 ELF 的 16 KB 装载对齐，并生成 `runtime.json`。当前双应用 Lab 的等长包名前缀重打包由 `tools/rebase-lab-runtime.py` 完成，仍须实机验证。
 
 ## 已验证范围
 

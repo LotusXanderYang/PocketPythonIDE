@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "packId": "org.pocketide.sample.echo",
+  "version": "1.0.0",
+  "minHostVersion": "0.2.0-alpha.1",
+  "minSdk": 26,
+  "supportedAbis": ["arm64-v8a", "x86_64", "armeabi-v7a", "x86"],
+  "languageIds": ["pocket-echo"],
+  "extensions": [".echo"],
+  "capabilities": ["initialize", "analyze", "complete", "run", "cancel", "diagnostics"],
+  "entryService": "org.pocketide.sample.echo.EchoPackService",
+  "warmupActivity": "org.pocketide.sample.echo.PackWarmupActivity",
+  "source": "https://github.com/LotusXanderYang/PocketPythonIDE",
+  "license": "MIT",
+  "dependencies": [],
+  "selfTests": {
+    "initialize": {},
+    "analyze": {"source": "ECHO hello\n", "expectStatus": "ok"},
+    "complete": {"source": "E\n", "expectStatus": "ok", "expectOutput": "ECHO"},
+    "run": {"source": "ECHO stage3\n", "expectStatus": "ok", "expectOutput": "stage3"},
+    "diagnostics": {"source": "ERROR\n", "expectStatus": "error", "expectErrorCode": "SOURCE_ERROR", "expectLine": 1, "expectColumn": 1},
+    "cancel": {"source": "WAIT 5000\n"},
+    "largeOutput": {"source": "REPEAT 120000\n", "minBytes": 1000000},
+    "crashRecovery": {},
+    "versionMismatch": {}
+  }
+}

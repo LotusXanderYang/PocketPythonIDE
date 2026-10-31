@@ -77,15 +77,16 @@ def await_output(serial, marker, timeout=90):
     raise RuntimeError(f"Timed out waiting for {marker!r}; last UI: {last_text[-1000:]}")
 
 
-def verify(serial, apk, expected_python, expected_torch):
+def verify(serial, apk, expected_python, expected_torch, package=PACKAGE,
+           activity=".MainActivity"):
     abi = adb(serial, "shell", "getprop", "ro.product.cpu.abilist")
     if "arm64-v8a" not in abi.split(","):
         raise RuntimeError(f"Physical ARM64 runtime required; device ABIs: {abi}")
     api = adb(serial, "shell", "getprop", "ro.build.version.sdk")
     model = adb(serial, "shell", "getprop", "ro.product.model")
     adb(serial, "install", "-r", str(apk), timeout=120)
-    adb(serial, "shell", "am", "force-stop", PACKAGE)
-    adb(serial, "shell", "am", "start", "-n", f"{PACKAGE}/.MainActivity")
+    adb(serial, "shell", "am", "force-stop", package)
+    adb(serial, "shell", "am", "start", "-n", f"{package}/{activity}")
 
     tap_node(serial, find_node(hierarchy(serial), "content-desc", "环境信息"))
     tap_node(serial, find_node(hierarchy(serial), "text", "运行自检"))
@@ -106,6 +107,7 @@ def verify(serial, apk, expected_python, expected_torch):
         raise RuntimeError(f"Unexpected editor script result: {script}")
 
     return {"ok": True, "serial": serial, "model": model, "api": api,
+            "package": package,
             "abi": abi, "python": expected_python, "torch": expected_torch,
             "probe": probe, "editor_script": script}
 
@@ -138,6 +140,8 @@ def main():
     parser.add_argument("--core-only", action="store_true",
                         help="Verify Python, SQLite and OpenSSL in an interpreter-only APK")
     parser.add_argument("--package", default=PACKAGE)
+    parser.add_argument("--activity", default=".MainActivity",
+                        help="Launcher activity for a non-legacy package")
     parser.add_argument("--report", type=Path, default=ROOT / ".toolchain/device-runtime-report.json")
     args = parser.parse_args()
     if args.core_only:
@@ -145,9 +149,8 @@ def main():
     else:
         if not args.expect_torch:
             parser.error("--expect-torch is required unless --core-only is set")
-        if args.package != PACKAGE:
-            parser.error("--package is only supported with --core-only")
-        report = verify(args.serial, args.apk.resolve(), args.expect_python, args.expect_torch)
+        report = verify(args.serial, args.apk.resolve(), args.expect_python,
+                        args.expect_torch, args.package, args.activity)
     args.report.parent.mkdir(parents=True, exist_ok=True)
     args.report.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps(report, ensure_ascii=True, indent=2))

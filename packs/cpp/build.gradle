@@ -1,0 +1,68 @@
+plugins { id 'com.android.application' }
+
+android {
+    namespace 'org.idecpp'
+    compileSdk 35
+    def preservedDebugKeystore = rootProject.file('.toolchain/android-user/debug.keystore')
+    signingConfigs {
+        preservedDebug {
+            storeFile preservedDebugKeystore
+            storePassword 'android'
+            keyAlias 'androiddebugkey'
+            keyPassword 'android'
+        }
+    }
+    buildTypes {
+        debug {
+            if (!preservedDebugKeystore.isFile())
+                throw new GradleException('缺少沿用的调试签名密钥；拒绝生成无法覆盖安装的 C/C++ 语言包')
+            signingConfig signingConfigs.preservedDebug
+        }
+    }
+    defaultConfig {
+        applicationId 'org.idecpp'
+        minSdk 26
+        targetSdk 35
+        versionCode 1
+        versionName '0.1.0-stage8'
+        ndk { abiFilters 'arm64-v8a' }
+    }
+    buildFeatures { aidl true }
+    packaging { jniLibs { useLegacyPackaging true } }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies { implementation project(':pack-sdk') }
+
+def verifyToolchainAsset = tasks.register('verifyToolchainAsset') {
+    inputs.file('src/main/assets/toolchain.json')
+    doLast {
+        def manifest = new groovy.json.JsonSlurper().parse(file('src/main/assets/toolchain.json'))
+        def archive = file('src/main/assets/toolchain.zip')
+        if (!archive.isFile()) throw new GradleException(
+                'C/C++ toolchain.zip is missing; prepare the locked toolchain before building the pack.')
+        if (archive.length() != manifest.asset_bytes.toLong())
+            throw new GradleException("C/C++ toolchain.zip size mismatch: ${archive.length()}")
+        def digest = java.security.MessageDigest.getInstance('SHA-256')
+        archive.withInputStream { stream ->
+            byte[] block = new byte[1024 * 1024]
+            int size
+            while ((size = stream.read(block)) != -1) digest.update(block, 0, size)
+        }
+        def actual = digest.digest().collect { String.format('%02x', it & 0xff) }.join()
+        if (!actual.equalsIgnoreCase(manifest.asset_sha256.toString()))
+            throw new GradleException("C/C++ toolchain.zip SHA-256 mismatch: $actual")
+        ['libc++_shared.so', 'libclang_exec.so', 'liblld_exec.so',
+                'liblld_wrapper.so', 'libprojectrunner.so',
+                'liblldb_dap.so', 'liblldb_server.so'].each { name ->
+            if (!file("src/main/jniLibs/arm64-v8a/$name").isFile())
+                throw new GradleException("C/C++ native library is missing: $name")
+        }
+    }
+}
+tasks.matching { it.name.startsWith('merge')
+        && (it.name.endsWith('Assets') || it.name.endsWith('NativeLibs')) }
+        .configureEach { dependsOn verifyToolchainAsset }

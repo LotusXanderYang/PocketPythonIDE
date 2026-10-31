@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/LotusXanderYang/PocketPythonIDE/blob/main/docs/language-pack-api/v1/static-index.schema.json",
+  "title": "Pocket IDE static language pack index v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "packs"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "packs": {"type": "array", "items": {"type": "object", "additionalProperties": false,
+      "required": ["packId", "version", "apkUrl", "apkSha256", "signingCertificateSha256", "apkBytes", "minSdk", "supportedAbis", "source", "license"],
+      "properties": {
+        "packId": {"type": "string", "minLength": 1},
+        "version": {"type": "string", "minLength": 1},
+        "apkUrl": {"type": "string", "pattern": "^https://", "maxLength": 2048},
+        "apkSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "signingCertificateSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "apkBytes": {"type": "integer", "minimum": 1},
+        "minSdk": {"type": "integer", "minimum": 26},
+        "supportedAbis": {"type": "array", "minItems": 1, "items": {"enum": ["arm64-v8a", "armeabi-v7a", "x86_64", "x86"]}},
+        "source": {"type": "string", "pattern": "^https://"},
+        "license": {"type": "string", "minLength": 1},
+        "toolchainBytes": {"type": "integer", "minimum": 0},
+        "capabilities": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "compatibility": {"type": "string", "minLength": 1},
+        "lastTestedDevice": {"type": "string", "minLength": 1},
+        "lastTestedDate": {"type": "string", "format": "date"}
+      }
+    }}
+  }
+}

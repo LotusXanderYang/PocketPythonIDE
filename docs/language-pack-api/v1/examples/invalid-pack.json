@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 2,
+  "packId": "invalid pack id",
+  "version": "",
+  "minHostVersion": "99.0",
+  "minSdk": 23,
+  "supportedAbis": ["linux-x86_64"],
+  "languageIds": [],
+  "extensions": ["echo"],
+  "capabilities": ["run"],
+  "entryService": "relative.Service",
+  "source": "file:///unknown",
+  "license": "",
+  "dependencies": [],
+  "selfTests": {}
+}

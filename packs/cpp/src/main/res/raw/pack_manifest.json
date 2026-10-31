@@ -1,0 +1,161 @@
+{
+  "schemaVersion": 1,
+  "packId": "org.idecpp",
+  "version": "0.1.0-stage8",
+  "minHostVersion": "0.2.0-alpha.1",
+  "minSdk": 26,
+  "supportedAbis": [
+    "arm64-v8a"
+  ],
+  "languageIds": [
+    "c",
+    "cpp"
+  ],
+  "extensions": [
+    ".c",
+    ".cpp",
+    ".cc",
+    ".cxx"
+  ],
+  "capabilities": [
+    "initialize",
+    "analyze",
+    "complete",
+    "diagnostics",
+    "build",
+    "run",
+    "debug",
+    "cancel"
+  ],
+  "entryService": "org.idecpp.CppPackService",
+  "debugAdapter": {"protocol": "dap-1", "transport": "binder-socketpair", "service": "org.idecpp.CppPackService"},
+  "warmupActivity": "org.idecpp.CppWarmupActivity",
+  "source": "https://github.com/LotusXanderYang/PocketPythonIDE",
+  "license": "MIT (pack); see dependencies and THIRD_PARTY_NOTICES.md",
+  "dependencies": [
+    {
+      "name": "clang",
+      "version": "21.1.8-3",
+      "license": "Apache-2.0; NCSA"
+    },
+    {
+      "name": "libandroid-glob",
+      "version": "0.6-3",
+      "license": "BSD-3-Clause"
+    },
+    {
+      "name": "libc++",
+      "version": "30",
+      "license": "NCSA"
+    },
+    {
+      "name": "libcompiler-rt",
+      "version": "21.1.8-3",
+      "license": "Apache-2.0; NCSA"
+    },
+    {
+      "name": "libffi",
+      "version": "3.8.0",
+      "license": "MIT"
+    },
+    {
+      "name": "libiconv",
+      "version": "1.19",
+      "license": "LGPL-2.1; GPL-3.0"
+    },
+    {
+      "name": "libllvm",
+      "version": "21.1.8-3",
+      "license": "Apache-2.0; NCSA"
+    },
+    {
+      "name": "liblzma",
+      "version": "5.8.4",
+      "license": "LGPL-2.1; GPL-2.0; GPL-3.0"
+    },
+    {
+      "name": "libxml2",
+      "version": "2.15.4-1",
+      "license": "MIT"
+    },
+    {
+      "name": "lld",
+      "version": "21.1.8-3",
+      "license": "Apache-2.0; NCSA"
+    },
+    {
+      "name": "llvm",
+      "version": "21.1.8-3",
+      "license": "Apache-2.0; NCSA"
+    },
+    {
+      "name": "ncurses",
+      "version": "6.6.20260307+really6.5.20250830",
+      "license": "MIT"
+    },
+    {
+      "name": "ndk-sysroot",
+      "version": "30",
+      "license": "NCSA"
+    },
+    {
+      "name": "zlib",
+      "version": "1.3.2",
+      "license": "Zlib"
+    },
+    {
+      "name": "zstd",
+      "version": "1.5.7-1",
+      "license": "GPL-2.0"
+    }
+  ],
+  "selfTests": {
+    "initialize": {},
+    "analyze": {
+      "source": "#include <stdio.h>\nint main(void){puts(\"pack-c-ok\");return 0;}\n",
+      "expectStatus": "ok",
+      "expectOutput": "语法检查通过"
+    },
+    "complete": {
+      "source": "pri",
+      "expectStatus": "ok",
+      "expectOutput": "printf"
+    },
+    "diagnostics": {
+      "source": "#include <missing_stage5_header.h>\nint main(void){return 0;}\n",
+      "expectStatus": "error",
+      "expectErrorCode": "HEADER_MISSING",
+      "expectLine": 1,
+      "expectColumn": 10
+    },
+    "build": {
+      "source": "#include <stdio.h>\nint main(void){puts(\"pack-c-ok\");return 0;}\n",
+      "expectStatus": "ok",
+      "expectOutput": "构建成功"
+    },
+    "run": {
+      "source": "#include <stdio.h>\nint main(void){puts(\"pack-c-ok\");return 0;}\n",
+      "expectStatus": "ok",
+      "expectOutput": "pack-c-ok"
+    },
+    "debug": {
+      "entryPath": "main.c",
+      "source": "#include <stdio.h>\nextern int twice(int);\nint main(void) { int answer = twice(21); printf(\"cpp-debug:%d\\n\", answer); return 0; }\n",
+      "secondaryPath": "helper.c",
+      "secondarySource": "int twice(int value) {\n  int result = value * 2;\n  return result;\n}\n",
+      "breakpointLine": 2,
+      "variableName": "value",
+      "variableValue": "21"
+    },
+    "cancel": {
+      "operation": "run",
+      "source": "int main(void){for(;;){} return 0;}\n"
+    },
+    "largeOutput": {
+      "source": "#include <stdio.h>\nint main(void){for(int i=0;i<200000;i++)puts(\"large-output\");return 0;}\n",
+      "minBytes": 1000000
+    },
+    "versionMismatch": {},
+    "crashRecovery": {}
+  }
+}
