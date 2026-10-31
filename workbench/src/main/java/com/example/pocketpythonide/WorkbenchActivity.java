@@ -78,6 +78,7 @@ public abstract class WorkbenchActivity extends Activity {
     private static final int FONT_REQUEST = 505;
     private static final String WORKSPACE_PREF = "workspace_tree_uri";
     private static final String FONT_SIZE_PREF = "editor_font_size_sp";
+    private static final String FONT_PRESET_PREF = "editor_font_preset";
     private static final String CRASH_REPORT = "last-java-crash.txt";
     private static boolean crashHandlerInstalled;
     protected abstract boolean hasRuntime();
@@ -818,8 +819,8 @@ public abstract class WorkbenchActivity extends Activity {
         if (!modernUi()) { showFontSizeDialog(); return; }
         String[] choices = {"编辑器字体大小", "浅色主题", "深色主题", "主体色：松绿",
                 "主体色：陶土", "主体色：靛蓝", "选择工作区背景", "背景效果", "重置背景",
-                "文件面板宽度", "输出面板高度", "快捷键", "导入编辑器字体",
-                "恢复默认编辑器字体", "代码高亮配色"};
+                "文件面板宽度", "输出面板高度", "快捷键", "编辑器字体",
+                "代码高亮配色"};
         new AlertDialog.Builder(this).setTitle("外观与编辑")
                 .setItems(choices, (dialog, which) -> {
                     if (which == 0) showFontSizeDialog();
@@ -839,8 +840,7 @@ public abstract class WorkbenchActivity extends Activity {
                     else if (which == 8) resetWallpaper();
                     else if (which == 9 || which == 10) showPanelSizeDialog(which == 9);
                     else if (which == 11) showShortcuts();
-                    else if (which == 12) chooseEditorFont();
-                    else if (which == 13) resetEditorFont();
+                    else if (which == 12) showEditorFontDialog();
                     else showSyntaxPaletteDialog();
                 }).show();
     }
@@ -1057,16 +1057,94 @@ public abstract class WorkbenchActivity extends Activity {
 
     private File editorFontFile() { return new File(getFilesDir(), "editor-font"); }
 
+    private Typeface fontPreset(String preset) {
+        switch (preset) {
+            case "light": return Typeface.create("monospace-light", Typeface.NORMAL);
+            case "medium": return Typeface.create("monospace-medium", Typeface.NORMAL);
+            case "condensed": return Typeface.create("monospace-condensed", Typeface.NORMAL);
+            default: return Typeface.MONOSPACE;
+        }
+    }
+
     private Typeface editorTypeface() {
-        if (!modernUi() || !editorFontFile().isFile()) return Typeface.MONOSPACE;
-        try { return Typeface.createFromFile(editorFontFile()); }
-        catch (RuntimeException invalid) { return Typeface.MONOSPACE; }
+        if (!modernUi()) return Typeface.MONOSPACE;
+        String preset = getPreferences(MODE_PRIVATE).getString(FONT_PRESET_PREF, null);
+        if (("imported".equals(preset) || preset == null) && editorFontFile().isFile()) {
+            try { return Typeface.createFromFile(editorFontFile()); }
+            catch (RuntimeException invalid) { return Typeface.MONOSPACE; }
+        }
+        return fontPreset(preset == null ? "default" : preset);
     }
 
     private void applyEditorTypeface() {
         Typeface face = editorTypeface();
         editor.setTypeface(face);
         lineNumbers.setTypeface(face);
+    }
+
+    private void showEditorFontDialog() {
+        String current = getPreferences(MODE_PRIVATE).getString(FONT_PRESET_PREF, null);
+        if (current == null) current = editorFontFile().isFile() ? "imported" : "default";
+        ScrollView scroll = new ScrollView(this);
+        LinearLayout content = column(SURFACE);
+        content.setPadding(dp(18), dp(12), dp(18), dp(12));
+        TextView hint = label("选择系统字体预设，或导入 .ttf / .otf 文件（不超过 10 MiB）。字体仅用于代码编辑区。",
+                13, MUTED, false);
+        hint.setPadding(0, 0, 0, dp(10));
+        content.addView(hint);
+        String[] ids = {"default", "light", "medium", "condensed"};
+        String[] names = {"系统等宽 · 默认", "细等宽", "中等宽", "紧凑等宽"};
+        AlertDialog dialog = new AlertDialog.Builder(this).setTitle("编辑器字体")
+                .setView(scroll).setNegativeButton("关闭", null).create();
+        for (int i = 0; i < ids.length; i++) {
+            final String id = ids[i];
+            TextView option = label((id.equals(current) ? "当前 · " : "") + names[i]
+                    + "\nAa 0O 1l { } ( )", 14, TEXT, false);
+            option.setTypeface(fontPreset(id));
+            option.setGravity(Gravity.CENTER_VERTICAL);
+            option.setPadding(dp(12), dp(7), dp(12), dp(7));
+            option.setMinHeight(dp(56));
+            option.setBackground(rounded(EDITOR, 5));
+            LinearLayout.LayoutParams params = size(-1, -2);
+            params.bottomMargin = dp(6);
+            content.addView(option, params);
+            interactive(option, view -> {
+                getPreferences(MODE_PRIVATE).edit().putString(FONT_PRESET_PREF, id).apply();
+                applyEditorTypeface();
+                refreshDebugGutter();
+                dialog.dismiss();
+            });
+        }
+        if (editorFontFile().isFile()) {
+            TextView imported = label(("imported".equals(current) ? "当前 · " : "")
+                    + "已导入字体\nAa 0O 1l { } ( )", 14, TEXT, false);
+            try { imported.setTypeface(Typeface.createFromFile(editorFontFile())); }
+            catch (RuntimeException invalid) { imported.setTypeface(Typeface.MONOSPACE); }
+            imported.setGravity(Gravity.CENTER_VERTICAL);
+            imported.setPadding(dp(12), dp(7), dp(12), dp(7));
+            imported.setMinHeight(dp(56));
+            content.addView(imported, size(-1, -2));
+            interactive(imported, view -> {
+                getPreferences(MODE_PRIVATE).edit().putString(FONT_PRESET_PREF, "imported").apply();
+                applyEditorTypeface();
+                refreshDebugGutter();
+                dialog.dismiss();
+            });
+        }
+        TextView importAction = label("导入字体文件…  .ttf / .otf", 14, ACCENT, false);
+        importAction.setGravity(Gravity.CENTER_VERTICAL);
+        importAction.setMinHeight(dp(52));
+        content.addView(importAction);
+        interactive(importAction, view -> { dialog.dismiss(); chooseEditorFont(); });
+        if (editorFontFile().isFile()) {
+            TextView remove = label("移除已导入字体", 13, MUTED, false);
+            remove.setGravity(Gravity.CENTER_VERTICAL);
+            remove.setMinHeight(dp(48));
+            content.addView(remove);
+            interactive(remove, view -> { resetEditorFont(); dialog.dismiss(); });
+        }
+        scroll.addView(content);
+        dialog.show();
     }
 
     private void chooseEditorFont() {
@@ -1108,6 +1186,8 @@ public abstract class WorkbenchActivity extends Activity {
                 Files.move(temporary.toPath(), editorFontFile().toPath(),
                         StandardCopyOption.REPLACE_EXISTING);
                 runOnUiThread(() -> {
+                    getPreferences(MODE_PRIVATE).edit()
+                            .putString(FONT_PRESET_PREF, "imported").apply();
                     applyEditorTypeface();
                     refreshDebugGutter();
                     Toast.makeText(this, "已导入编辑器字体", Toast.LENGTH_SHORT).show();
@@ -1122,6 +1202,7 @@ public abstract class WorkbenchActivity extends Activity {
         if (editorFontFile().exists() && !editorFontFile().delete()) {
             showError("无法移除已导入的字体"); return;
         }
+        getPreferences(MODE_PRIVATE).edit().remove(FONT_PRESET_PREF).apply();
         applyEditorTypeface();
         refreshDebugGutter();
         Toast.makeText(this, "已恢复默认编辑器字体", Toast.LENGTH_SHORT).show();
@@ -1151,16 +1232,55 @@ public abstract class WorkbenchActivity extends Activity {
         LinearLayout content = column(SURFACE);
         content.setPadding(dp(18), dp(10), dp(18), dp(10));
         TextView hint = label((light ? "浅色" : "深色")
-                + "主题的代码颜色 · 输入 #RRGGBB", 12, MUTED, false);
+                + "主题 · 选择预设或点色块选颜色，也可输入 #RRGGBB 微调", 12, MUTED, false);
         content.addView(hint);
+        content.setFocusableInTouchMode(true);
+        content.requestFocus();
         EditText[] inputs = new EditText[SyntaxPalette.KEYS.length];
         int[] colors = current.colors();
+        for (int presetIndex = 0; presetIndex < SyntaxPalette.PRESET_NAMES.length;
+                presetIndex++) {
+            final int selectedPreset = presetIndex;
+            SyntaxPalette palette = SyntaxPalette.preset(presetIndex, light);
+            LinearLayout preset = column(EDITOR);
+            preset.setPadding(dp(12), dp(7), dp(12), dp(7));
+            preset.setBackground(rounded(EDITOR, 5));
+            TextView title = label(SyntaxPalette.PRESET_NAMES[presetIndex], 13, TEXT, true);
+            preset.addView(title);
+            LinearLayout samples = row(EDITOR);
+            for (int color : palette.colors()) {
+                TextView sample = label("", 12, TEXT, false);
+                sample.setBackground(rounded(color, 3));
+                LinearLayout.LayoutParams swatchSize = size(dp(27), dp(16));
+                swatchSize.rightMargin = dp(5);
+                samples.addView(sample, swatchSize);
+            }
+            LinearLayout.LayoutParams sampleRow = size(-1, dp(20));
+            sampleRow.topMargin = dp(6);
+            preset.addView(samples, sampleRow);
+            LinearLayout.LayoutParams presetSize = size(-1, -2);
+            presetSize.topMargin = dp(6);
+            content.addView(preset, presetSize);
+            preset.setContentDescription("选择" + SyntaxPalette.PRESET_NAMES[presetIndex] + "配色预设");
+            interactive(preset, view -> {
+                int[] selected = SyntaxPalette.preset(selectedPreset, light).colors();
+                for (int i = 0; i < inputs.length; i++)
+                    inputs[i].setText(SyntaxPalette.hex(selected[i]));
+            });
+        }
+        TextView customHint = label("单独调整颜色", 12, MUTED, false);
+        customHint.setPadding(0, dp(10), 0, dp(4));
+        content.addView(customHint);
         for (int i = 0; i < inputs.length; i++) {
             LinearLayout row = row(SURFACE);
             row.setGravity(Gravity.CENTER_VERTICAL);
-            TextView swatch = label("● " + SyntaxPalette.NAMES[i], 13, colors[i], false);
-            row.addView(swatch, new LinearLayout.LayoutParams(0, dp(48), 1));
-            swatch.setGravity(Gravity.CENTER_VERTICAL);
+            TextView name = label(SyntaxPalette.NAMES[i], 13, TEXT, false);
+            name.setGravity(Gravity.CENTER_VERTICAL);
+            row.addView(name, new LinearLayout.LayoutParams(0, dp(52), 1));
+            TextView swatch = label("", 13, TEXT, false);
+            swatch.setBackground(rounded(colors[i], 5));
+            swatch.setContentDescription("选择" + SyntaxPalette.NAMES[i] + "颜色");
+            row.addView(swatch, size(dp(48), dp(48)));
             EditText input = new EditText(this);
             input.setSingleLine(true);
             input.setText(SyntaxPalette.hex(colors[i]));
@@ -1175,13 +1295,15 @@ public abstract class WorkbenchActivity extends Activity {
                         int after) { }
                 @Override public void onTextChanged(CharSequence s, int start, int before,
                         int count) {
-                    try { swatch.setTextColor(SyntaxPalette.parse(s.toString())); }
-                    catch (IllegalArgumentException ignored) { swatch.setTextColor(MUTED); }
+                    try { swatch.setBackground(rounded(SyntaxPalette.parse(s.toString()), 5)); }
+                    catch (IllegalArgumentException ignored) { swatch.setBackground(rounded(MUTED, 5)); }
                 }
                 @Override public void afterTextChanged(Editable s) { }
             });
             inputs[i] = input;
-            row.addView(input, size(dp(115), dp(48)));
+            String token = SyntaxPalette.NAMES[i];
+            interactive(swatch, view -> showColorChoices(token, input, light));
+            row.addView(input, size(dp(112), dp(48)));
             content.addView(row);
         }
         scroll.addView(content);
@@ -1218,6 +1340,36 @@ public abstract class WorkbenchActivity extends Activity {
                     applySyntaxPalette();
                     dialog.dismiss();
                 }));
+        dialog.show();
+        dialog.getWindow().setSoftInputMode(
+                WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+    }
+
+    private void showColorChoices(String token, EditText input, boolean light) {
+        LinearLayout content = column(SURFACE);
+        content.setPadding(dp(10), dp(10), dp(10), dp(10));
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle("选择" + token + "颜色")
+                .setView(content).setNegativeButton("取消", null).create();
+        LinearLayout swatches = null;
+        int[] choices = SyntaxPalette.colorChoices(light);
+        for (int i = 0; i < choices.length; i++) {
+            if (i % 5 == 0) {
+                swatches = row(SURFACE);
+                content.addView(swatches);
+            }
+            int color = choices[i];
+            TextView option = label("", 12, TEXT, false);
+            option.setBackground(rounded(color, 6));
+            option.setContentDescription("选择颜色 " + SyntaxPalette.hex(color));
+            LinearLayout.LayoutParams slot = size(dp(48), dp(48));
+            slot.setMargins(dp(4), dp(4), dp(4), dp(4));
+            swatches.addView(option, slot);
+            interactive(option, view -> {
+                input.setText(SyntaxPalette.hex(color));
+                dialog.dismiss();
+            });
+        }
         dialog.show();
     }
 

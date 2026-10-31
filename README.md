@@ -6,6 +6,8 @@ A lightweight coding workspace for ARM64 Android tablets. The IDE handles editin
 
 **Current version: `0.2.0-alpha.1` (preview)** · Android API 26+ · ARM64
 
+The `main` branch includes appearance and language-pack label improvements awaiting device validation. The published `0.2.0-alpha.1` APK does not contain those newer changes.
+
 > [Pocket PyTorch Lab is a separate project](https://github.com/LotusXanderYang/PocketPyTorchLab). It is an offline CPU training app and does not require this IDE.
 
 ## Highlights

@@ -145,18 +145,21 @@ public final class IdeActivity extends WorkbenchActivity {
     @Override protected String environmentSummary() {
         PackRegistry.Descriptor pack = registry().enabled();
         return pack == null ? "仅编辑模式。请在左侧扩展图标中发现并启用语言包。"
-                : "已启用 " + pack.packId() + " " + pack.version()
+                : "已启用 " + pack.displayName() + " " + pack.version()
                     + "\n仅通过验证的能力可使用。";
     }
     @Override protected String librariesSummary() {
         PackRegistry.Descriptor pack = registry().enabled();
-        return pack == null ? "尚未启用语言包" : pack.packId() + " " + pack.version();
+        return pack == null ? "尚未启用语言包" : pack.displayName() + " " + pack.version();
     }
     @Override protected String statusSummary() { return capabilitySummary(); }
     @Override protected CompletionCatalog completionCatalog() { return CompletionCatalog.EMPTY; }
     @Override protected String probeProgressText() { return "正在连接已启用语言包…"; }
     @Override protected String formatProbe(JSONObject result) {
-        return result.optString("packId") + "：" + result.optString("error", "初始化完成");
+        PackRegistry.Descriptor pack = registry().enabled();
+        String id = result.optString("packId");
+        String name = pack != null && id.equals(pack.packId()) ? pack.displayName() : id;
+        return name + "：" + result.optString("error", "初始化完成");
     }
     @Override protected String probeBackend() throws Exception {
         PackRegistry.Descriptor pack = runnable();
@@ -176,14 +179,16 @@ public final class IdeActivity extends WorkbenchActivity {
         List<PackRegistry.Descriptor> found = registry().discover();
         PackRegistry.Descriptor active = registry().enabled();
         String[] names = new String[found.size() + 1];
-        names[0] = active == null ? "当前：未启用" : "当前：" + active.packId() + "（点击禁用）";
+        names[0] = active == null ? "当前：未启用"
+                : "当前：" + active.displayName() + "（点击禁用）";
         for (int i = 0; i < found.size(); i++)
-            names[i + 1] = found.get(i).packId() + "  " + found.get(i).version();
-        new AlertDialog.Builder(this).setTitle("可执行语言包")
+            names[i + 1] = found.get(i).displayName() + "  " + found.get(i).version();
+        new AlertDialog.Builder(this).setTitle("语言包")
                 .setItems(names, (dialog, which) -> {
                     if (which == 0) {
                         if (active != null) new AlertDialog.Builder(this).setTitle("禁用语言包")
-                                .setMessage(active.packId() + " 将不再接收任务；已保存的文件保留。")
+                                .setMessage(active.displayName()
+                                        + " 将不再接收任务；已保存的文件保留。")
                                 .setNegativeButton("取消", null)
                                 .setPositiveButton("禁用", (d, w) -> {
                                     registry().disable();
@@ -199,7 +204,9 @@ public final class IdeActivity extends WorkbenchActivity {
 
     private void inspect(PackRegistry.Descriptor pack) {
         JSONArray claimed = pack.manifest.optJSONArray("capabilities");
-        String detail = "来源：" + pack.manifest.optString("source")
+        String detail = "语言：" + pack.displayName()
+                + "\n包标识：" + pack.packId()
+                + "\n来源：" + pack.manifest.optString("source")
                 + "\n版本：" + pack.version()
                 + "\n许可证：" + pack.manifest.optString("license")
                 + "\n证书 SHA-256：" + pack.certificate
@@ -207,7 +214,7 @@ public final class IdeActivity extends WorkbenchActivity {
                 + "\nAndroid 权限：" + pack.permissions
                 + "\n声明能力：" + claimed
                 + "\n\n该 APK 在独立进程运行代码，并拥有自身 Android 权限。启用前将逐项执行包内自测；未通过的能力不会开放。";
-        new AlertDialog.Builder(this).setTitle(pack.packId()).setMessage(detail)
+        new AlertDialog.Builder(this).setTitle(pack.displayName()).setMessage(detail)
                 .setNegativeButton("取消", null)
                 .setPositiveButton("验证并启用", (dialog, which) -> {
                     Toast.makeText(this, "语言包验证中…", Toast.LENGTH_SHORT).show();

@@ -52,6 +52,30 @@ final class PackRegistry {
         }
         String packId() { return manifest.optString("packId"); }
         String version() { return manifest.optString("version"); }
+        String displayName() {
+            // Friendly labels never replace the package ID used for binding and trust checks.
+            if ("com.example.pocketpythonstd".equals(packId())) return "Python";
+            if ("org.idecpp".equals(packId())) return "C / C++";
+            JSONArray languages = manifest.optJSONArray("languageIds");
+            if (languages == null) return "语言包";
+            StringBuilder names = new StringBuilder();
+            for (int i = 0; i < Math.min(3, languages.length()); i++) {
+                String id = languages.optString(i).trim();
+                String name;
+                if ("python".equals(id)) name = "Python";
+                else if ("cpp".equals(id)) name = "C++";
+                else if ("c".equals(id)) name = "C";
+                else if ("pocket-echo".equals(id) || "echo".equals(id)) name = "Echo";
+                else {
+                    name = id.replace('-', ' ');
+                    if (!name.matches("[A-Za-z0-9+# ]{1,24}")) continue;
+                    name = Character.toUpperCase(name.charAt(0)) + name.substring(1);
+                }
+                if (names.length() > 0) names.append(" / ");
+                names.append(name);
+            }
+            return names.length() == 0 ? "语言包" : names.toString();
+        }
         boolean supports(String capability) {
             JSONArray values = manifest.optJSONArray("capabilities");
             if (values == null) return false;

@@ -6,6 +6,8 @@
 
 **当前版本：`0.2.0-alpha.1`（测试版）** · Android API 26+ · ARM64
 
+`main` 分支新增了外观选择和语言包易读名称，仍待实机验证；已发布的 `0.2.0-alpha.1` APK 尚不包含这些更新。
+
 > [Python · PyTorch Lab 已拆分为独立项目](https://github.com/LotusXanderYang/PocketPyTorchLab)。Lab 面向离线 CPU 小模型训练，不需要安装本 IDE。
 
 ## 亮点
