@@ -2,9 +2,9 @@
 
 当前开发工作区有两个独立 Android 应用：通用 [IDE](ide/) 和 [Python · PyTorch Lab](lab/)。IDE 可安装经验证的语言包；阶段 5 的 [C/C++ 包](packs/cpp/)已在 ARM64 Android 实机完成课程样例、编译错误、取消、超时等验证。阶段 6 的独立 [Python 基础包](packs/python/)已在 MRO-W00 的 Android 兼容环境通过实机验收；范围见[兼容说明](docs/python-pack-compatibility.md)及[阶段 6 验收](docs/STAGE6-ACCEPTANCE-2026-10-25.md)。Lab 的阶段 7 离线 CPU 训练流程已在 MAG-AN00 实机完成验证；使用方法和支持边界见 [Lab 说明](lab/README.md)与[阶段 7 验收](docs/STAGE7-ACCEPTANCE-2026-10-25.md)。阶段 8 的 Python 包 DAP 调试在 MAG-AN00 上通过断点、单步、变量、多文件、异常与退出测试；C/C++ 调试已在 MAG-AN00 与 MRO-W00 验证断点和调用栈，MRO-W00 还验证了运行中暂停及 C++ 异常停止，详见[阶段 8 C/C++ 实机记录](docs/STAGE8-CPP-DEBUG-HARMONY-FIX-2026-10-31.md)。此前进度和阶段 5 证据见[阶段性报告](docs/PROGRESS-REPORT-2026-10-25.md)及[阶段 5 验收](docs/STAGE5-ACCEPTANCE-2026-10-25.md)。
 
-调试 APK 可在[本地 artifacts 目录](artifacts/)找到；旧版 `v0.1.2-beta.5` 仍是公开 Release 和回退锚点，新版调试包尚未发布。IDE、Lab 和旧版使用不同包名；覆盖安装新版 IDE 请保留原应用数据，不要先卸载。不同应用的私有脚本不会自动互通，SAF 工作区需分别授权。语言包协议见 [API v1](docs/language-pack-api/v1/README.md)，SDK 源码与调试 AAR 见 [pack-sdk](pack-sdk/README.md)。
+最新公开预览版为 [v0.2.0-alpha.1](https://github.com/LotusXanderYang/PocketPythonIDE/releases/tag/v0.2.0-alpha.1)，提供 IDE、Lab、Python 包和 C/C++ 包四份 APK；安装顺序、SHA-256 和已知限制见该 Release。旧版 `v0.1.2-beta.5` 保留作为回退锚点。IDE、Lab 和旧版使用不同包名；覆盖安装新版 IDE 请保留原应用数据，不要先卸载。不同应用的私有脚本不会自动互通，SAF 工作区需分别授权。语言包协议见 [API v1](docs/language-pack-api/v1/README.md)，SDK 源码与调试 AAR 见 [pack-sdk](pack-sdk/README.md)。
 
-新版的安装顺序、各 APK 的精确大小与哈希、签名、实测范围和发布前缺口见[阶段 9 清单](docs/STAGE9-RELEASE-PREFLIGHT-2026-10-31.md)。[IDE 使用说明](ide/README.md)、[Lab 使用说明](lab/README.md)、[Python 包](packs/python/README.md)与[C/C++ 包](packs/cpp/README.md)分别列出各自的能力和限制。公开[静态语言包目录](docs/language-pack-index.json)目前为空；本地测试候选不会伪装成已发布下载。
+新版的安装顺序、各 APK 的精确大小与哈希、签名、实测范围和发布前缺口见[阶段 9 清单](docs/STAGE9-RELEASE-PREFLIGHT-2026-10-31.md)。[IDE 使用说明](ide/README.md)、[Lab 使用说明](lab/README.md)、[Python 包](packs/python/README.md)与[C/C++ 包](packs/cpp/README.md)分别列出各自的能力和限制。公开[静态语言包目录](docs/language-pack-index.json)列出本次 Release 的两个语言包及校验信息。
 
 第三方运行时的固定归档、构建配方、许可证及源码获取途径见[第三方源码指引](docs/THIRD-PARTY-SOURCE.md)。
 

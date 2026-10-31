@@ -1,4 +1,4 @@
-# Pocket C/C++（阶段 8 调试候选）
+# Pocket C/C++（0.2.0 Alpha 语言包）
 
 这是独立安装的 ARM64 Android Language Pack API v1 APK，包名 `org.idecpp`。它在自己的 `:compiler` 服务进程中运行 Clang/LLD/LLDB 21.1.8。IDE 基础 APK 不含编译器或调试器。目标是课程中的单目标 C/C++ 项目；不提供交互式终端、任意第三方库管理或可导出的安装包。
 
@@ -48,4 +48,4 @@ python ./packs/cpp/generate_manifest.py
 
 阶段 8 LLDB 闭包的 `.deb` 总量为 **101,217,452 字节**；已在 MRO-W00 验证的当前 C/C++ 调试 APK 为 **103,278,590 字节**，IDE APK 为 **267,553 字节**。调试器使语言包明显增大，且设备私有工具链也需要更多空间。若要缩小体积，需定制只含 AArch64 后端的 LLVM/LLDB 并重新完成许可证与实机回归。
 
-许可证和完整依赖清单见 APK 内 [第三方声明](src/main/assets/THIRD_PARTY_NOTICES.md) 与 `src/main/assets/licenses/`。调试产物是本地测试候选；未发布 Release。
+许可证和完整依赖清单见 APK 内 [第三方声明](src/main/assets/THIRD_PARTY_NOTICES.md) 与 `src/main/assets/licenses/`。已验证 APK 在 [v0.2.0-alpha.1 Release](https://github.com/LotusXanderYang/PocketPythonIDE/releases/tag/v0.2.0-alpha.1)，哈希与兼容条件见[静态语言包目录](../../docs/language-pack-index.json)。

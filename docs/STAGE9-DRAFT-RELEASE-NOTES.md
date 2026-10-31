@@ -1,6 +1,6 @@
 # 发布说明草案：Pocket Android IDE / Python · PyTorch Lab 0.2.0 Alpha
 
-**草案，尚未发布。** 本地 `HEAD` 已恢复到远端旧提交，但当前产品源码仍未提交；C/C++ 工具链再发行许可尚待逐包审阅。阶段 9 的 BTK-W00 全新安装流程已通过，设备边界仍见发布前清单。下面的下载链接、源码提交和最终哈希必须在审阅、提交、重建及实机回归后填入，不能直接复制本文件发布。
+**历史草案。** 最终版已发布在 [v0.2.0-alpha.1 Release](https://github.com/LotusXanderYang/PocketPythonIDE/releases/tag/v0.2.0-alpha.1)；以下为发布前撰写的草案，不作为当前下载与校验依据。阶段 9 的 BTK-W00 全新安装流程与设备边界见发布前清单。
 
 ## 包含内容
 

@@ -24,4 +24,4 @@
 
 从仓库根目录运行 `./build-local.ps1 -Product lab`，脚本会验证或按固定前缀重打包现有 ARM64 运行时，然后构建 `lab/build/outputs/apk/debug/lab-debug.apk`。`lab/src/main/assets/runtime.json` 固定 CPython 3.14.6、NumPy 2.5.4、CPU PyTorch 2.14.1、包和 wheel 的版本与 SHA-256；`runtime.zip` 的 SHA-256 为 `170b4e26d9da3894d0acc62f3f0dd91c9a38459352a3e9f735ae602b1adf8311`。运行时组装/审计入口为 [`tools/assemble-modern-runtime.py`](../tools/assemble-modern-runtime.py)、[`tools/audit_android_runtime.py`](../tools/audit_android_runtime.py) 和 [`tools/rebase-lab-runtime.py`](../tools/rebase-lab-runtime.py)；Termux 源码固定到提交 `6be420e7536d1e228f3ffee2eb74ca2736a73fc1`。详情见根目录 [构建说明](../README.md)和 [第三方声明](../THIRD_PARTY_NOTICES.md)。第三方声明也打入 APK 的 `assets/THIRD_PARTY_NOTICES.md`。
 
-阶段 9 本地候选 APK、大小、SHA-256 与签名见[发布前清单](../docs/STAGE9-RELEASE-PREFLIGHT-2026-10-31.md)。当前构建沿用项目保留的调试密钥，直接覆盖同签名旧版 Lab 可保留私有项目；跨签名安装会被系统拒绝，不能通过先卸载来绕过数据备份。新版尚未发布。
+已验证 APK、大小、SHA-256 与签名见 [v0.2.0-alpha.1 Release](https://github.com/LotusXanderYang/PocketPythonIDE/releases/tag/v0.2.0-alpha.1)。当前构建沿用项目保留的调试密钥，直接覆盖同签名旧版 Lab 可保留私有项目；跨签名安装会被系统拒绝，不能通过先卸载来绕过数据备份。

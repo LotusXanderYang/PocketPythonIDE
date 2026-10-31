@@ -1,5 +1,7 @@
 # 阶段 9 发布前清单（2026-10-31）
 
+> 本文件保留发布前检查经过。最终发布状态、确切源码提交与四份附件的校验值请以 [v0.2.0-alpha.1 Release](https://github.com/LotusXanderYang/PocketPythonIDE/releases/tag/v0.2.0-alpha.1) 为准；两个已发布语言包见[静态目录](language-pack-index.json)。
+
 状态：**本地准备，未发布**。本轮已核对远端 `main` 提交 `6282cd2f2ab789366e7915a3336135c67a706b42` 并恢复本地 `HEAD` 指向它，未改变工作树或旧暂存内容；当前源码仍包含大量未提交改动，下表 APK 尚不能绑定到包含这些改动的确切提交，因此不满足发布验收。没有改写 beta.5 标签或 Release，没有清除设备数据。续作细节见[发布任务记录](RELEASE-RESUME-2026-10-31.md)。
 
 ## 当前源码离线构建产物

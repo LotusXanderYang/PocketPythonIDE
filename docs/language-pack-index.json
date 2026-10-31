@@ -1,4 +1,39 @@
 {
   "schemaVersion": 1,
-  "packs": []
+  "packs": [
+    {
+      "packId": "com.example.pocketpythonstd",
+      "version": "0.1.0-stage8",
+      "apkUrl": "https://github.com/LotusXanderYang/PocketPythonIDE/releases/download/v0.2.0-alpha.1/PocketPythonPack-0.1.0-stage8.apk",
+      "apkSha256": "cf601df29e71f1a20fe501208f5fb2c2b6c2eef814ac4762f9404dcbfca5f2aa",
+      "signingCertificateSha256": "f1fa1170a83b9ac5d8436b25d9c163a07b68ad9a5567492d568906edeaa888e6",
+      "apkBytes": 11241738,
+      "minSdk": 26,
+      "supportedAbis": ["arm64-v8a"],
+      "source": "https://github.com/LotusXanderYang/PocketPythonIDE/tree/v0.2.0-alpha.1/packs/python",
+      "license": "MIT (pack); PSF-2.0 and dependency licenses in THIRD_PARTY_NOTICES.md",
+      "toolchainBytes": 11255268,
+      "capabilities": ["initialize", "analyze", "complete", "run", "diagnostics", "debug", "cancel"],
+      "compatibility": "ARM64 Android API 26+; verified on BTK-W00; API 26 and 16 KB memory pages not yet device-tested",
+      "lastTestedDevice": "BTK-W00",
+      "lastTestedDate": "2026-10-31"
+    },
+    {
+      "packId": "org.idecpp",
+      "version": "0.1.0-stage8",
+      "apkUrl": "https://github.com/LotusXanderYang/PocketPythonIDE/releases/download/v0.2.0-alpha.1/PocketCppPack-0.1.0-stage8.apk",
+      "apkSha256": "8ca988d8c7d50968e552023f88855296d66c8e2db3c913e50478b568d07d3411",
+      "signingCertificateSha256": "f1fa1170a83b9ac5d8436b25d9c163a07b68ad9a5567492d568906edeaa888e6",
+      "apkBytes": 103328609,
+      "minSdk": 26,
+      "supportedAbis": ["arm64-v8a"],
+      "source": "https://github.com/LotusXanderYang/PocketPythonIDE/tree/v0.2.0-alpha.1/packs/cpp",
+      "license": "MIT (pack); see dependencies and THIRD_PARTY_NOTICES.md",
+      "toolchainBytes": 100532972,
+      "capabilities": ["initialize", "analyze", "complete", "diagnostics", "build", "run", "debug", "cancel"],
+      "compatibility": "ARM64 Android API 26+; verified on BTK-W00 and MRO-W00; API 26 and 16 KB memory pages not yet device-tested",
+      "lastTestedDevice": "BTK-W00",
+      "lastTestedDate": "2026-10-31"
+    }
+  ]
 }

@@ -1,10 +1,10 @@
-# Pocket Android IDE（发布前候选）
+# Pocket Android IDE（0.2.0 Alpha）
 
-通用 ARM64 Android 代码编辑器，包名 `com.example.pocketandroidide`，最低 Android API 26。基础 APK 约 0.26 MB，不包含 Python、PyTorch、C/C++ 编译器或调试器；运行能力来自用户另外安装并验证的语言包。当前仍是 `0.2.0-alpha.1` 本地测试版，尚无新版 GitHub Release。
+通用 ARM64 Android 代码编辑器，包名 `com.example.pocketandroidide`，最低 Android API 26。基础 APK 约 0.26 MB，不包含 Python、PyTorch、C/C++ 编译器或调试器；运行能力来自用户另外安装并验证的语言包。当前公开预览版为 [v0.2.0-alpha.1](https://github.com/LotusXanderYang/PocketPythonIDE/releases/tag/v0.2.0-alpha.1)。
 
 ## 安装与使用
 
-1. 从本仓库 `artifacts/` 取得阶段 8 IDE 候选 APK，核对[候选清单](../docs/STAGE9-RELEASE-PREFLIGHT-2026-10-31.md)中的 SHA-256；安装后打开应用。旧版 `com.example.pocketpythonide` 可并存。覆盖此新版 IDE 时保持同一签名，不要先卸载，否则应用私有数据会被删除。
+1. 从 [v0.2.0-alpha.1 Release](https://github.com/LotusXanderYang/PocketPythonIDE/releases/tag/v0.2.0-alpha.1) 下载 IDE APK，核对页面中的 SHA-256；安装后打开应用。旧版 `com.example.pocketpythonide` 可并存。覆盖此新版 IDE 时保持同一签名，不要先卸载，否则应用私有数据会被删除。
 2. 在“文件 → 打开文件夹”中选择可写的 Android SAF 目录并授权；新建文件或打开已有项目。文件树、标签页、保存、主题、背景、字体导入与自定义代码高亮配色均属于 IDE。SAF 文档提供者拒写时应改选可写目录；不要把原生鸿蒙目录当作普通文件路径。
 3. 另行安装 [Python 包](../packs/python/README.md)或 [C/C++ 包](../packs/cpp/README.md)，在“语言包”中查看包名、签名、权限和能力，再点“验证并启用”“启用通过的能力”。支持文件的顶部状态才会显示可运行或可调试。`.echo` 是 SDK 的示例语言包。
 4. 构建、运行和调试结果进入底部面板。调试时在行号处设置断点，使用工具条继续、单步、暂停和停止，并在左侧查看变量与调用栈。C/C++ 项目配置和 Python 输入参数分别见对应语言包 README。
