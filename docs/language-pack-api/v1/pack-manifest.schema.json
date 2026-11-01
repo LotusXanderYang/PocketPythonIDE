@@ -5,6 +5,13 @@
   "type": "object",
   "additionalProperties": false,
   "required": ["schemaVersion", "packId", "version", "minHostVersion", "minSdk", "supportedAbis", "languageIds", "extensions", "capabilities", "entryService", "source", "license", "dependencies", "selfTests"],
+  "allOf": [
+    {"properties": {"capabilities": {"contains": {"const": "cancel"}}}},
+    {"if": {"properties": {"capabilities": {"contains": {"const": "debug"}}}},
+     "then": {"required": ["debugAdapter"], "properties": {"selfTests": {"required": ["debug"]}}}},
+    {"if": {"properties": {"capabilities": {"contains": {"const": "run"}}}},
+     "then": {"properties": {"selfTests": {"required": ["largeOutput"]}}}}
+  ],
   "properties": {
     "schemaVersion": {"const": 1},
     "packId": {"type": "string", "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$"},

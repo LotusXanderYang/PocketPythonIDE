@@ -1,6 +1,6 @@
 # Language Pack API v1（阶段 3 原型）
 
-本目录是独立 Android APK 语言包的接口规范。当前宿主 `com.example.pocketandroidide` 为 `0.2.0-alpha.1`，最低 API 26。`pack-sdk/` 是可引用的 AAR 源码，`sample-pack/` 是无原生工具链的 `.echo` 示例。示例在 ARM64 的 MAG-AN00（API 36）上通过阶段 3 实机验收；范围与证据见 [验证记录](VALIDATION.md)。
+本目录是独立 Android APK 语言包的接口规范。当前 IDE 应用版本为 `0.2.0-alpha.2`，最低 API 26；包清单的 `minHostVersion` 仍固定为 `0.2.0-alpha.1`，作为 API v1 兼容基线，不应改填 IDE 的发行版本。`pack-sdk/` 提供源码模块与调试 AAR，`sample-pack/` 是无原生工具链的 `.echo` 示例。示例在 ARM64 的 MAG-AN00（API 36）上通过阶段 3 实机验收；范围与证据见 [验证记录](VALIDATION.md)。
 
 ## 安装、发现与信任
 
@@ -30,7 +30,7 @@ ITaskCallback.finished(Bundle result)  // oneway，恰好一次
 
 结果 Bundle 必含 `taskId`、`protocolVersion`、`status`、`errorCode`、`message`、`exitCode`、`line`、`column`、`endLine`、`endColumn`、`resultPath`。`status` 是 `ok|error|cancelled|unsupported`。位置均为**1 起始的 Unicode 码点行/列**；未知位置填 0。文本偏移若未来与 LSP 通信，需显式转换为 LSP 的 0 起始 UTF-16 位置，不能直接混用。诊断可与编译错误共享这些字段。`resultPath` 目前只允许空字符串，预留给后续显式产物清单。IDE 展示错误时带包 ID 与任务 ID，便于追溯。
 
-`analyze`/`complete`/`diagnostics` 的 v1 简例通过同一个文本输出 FD 返回可显示 UTF-8 结果。正式结构化补全和多条诊断需要 API 的后续兼容扩展；不得把这一文本通道称作完整 LSP。阶段 8 增加了可选的独立[调试通道](DEBUG.md)：不改变原 v1 任务 Binder；目前只有独立 Python 包通过 DAP 实机验证，C/C++ 包未声明调试。
+`analyze`/`complete`/`diagnostics` 的 v1 简例通过同一个文本输出 FD 返回可显示 UTF-8 结果。正式结构化补全和多条诊断需要 API 的后续兼容扩展；不得把这一文本通道称作完整 LSP。阶段 8 增加了可选的独立[调试通道](DEBUG.md)：不改变原 v1 任务 Binder；已发布的 Python 和 C/C++ 包均在实机通过调试验证，具体设备和边界见阶段 8 记录。
 
 阶段 6 的第一方 Python 包可选声明 `workspaceOutput: "changes-v1"`。此时输出 FD 改为 UTF-8 JSON：`stdout`、`stderr` 和 `changes` 数组；每项变更给出相对 `path`、原文件 `baseSha256`（新文件为空串）及 `dataBase64`。只有与 IDE 同签名的包才可使用此格式。宿主先核验路径、基线哈希、单文件 1 MiB、变更总量 2 MiB、最多 100 个文件，再写入私有项目副本；SAF 工作区仍经宿主原有哈希冲突检测写回。取消或不完整响应不写回。v1 不支持删除文件回传，包须明确报错。未声明该字段的现有包仍输出普通 UTF-8 文本，行为不变。此扩展是阶段 6 的第一方文件回传能力，第三方包不能借此直接取得 SAF 授权。
 
@@ -51,23 +51,24 @@ ITaskCallback.finished(Bundle result)  // oneway，恰好一次
 
 ## 版本、索引与发布
 
-`schemaVersion=1` 和 AIDL `protocolVersion=1` 必须同时匹配。当前宿主仅接受 `minHostVersion=0.2.0-alpha.1`，避免把预发行版本误判为兼容；后续宿主放宽时仍须保持 v1 字段语义。新必填字段或改变 Bundle 字段含义须提升协议主版本并提供迁移说明。包升级后版本字段改变会撤销能力验证；签名改变会撤销启用。当前一时只启用一个可执行包，后续可扩展为按语言选择。
+`schemaVersion=1` 和 AIDL `protocolVersion=1` 必须同时匹配。当前 IDE 虽为 `0.2.0-alpha.2`，仍仅接受 `minHostVersion=0.2.0-alpha.1`，避免把预发行版本误判为兼容；后续宿主放宽时仍须保持 v1 字段语义。新必填字段或改变 Bundle 字段含义须提升协议主版本并提供迁移说明。包升级后版本字段改变会撤销能力验证；签名改变会撤销启用。当前同一时刻只启用一个可执行包，切换语言包需重新选择并验证。
 
 [静态索引 Schema](static-index.schema.json) 另记发布后的 APK HTTPS 链接、SHA-256、签名证书 SHA-256 和字节数。它只是下载目录，不是权限来源。包内清单不含自身 APK 哈希，避免自引用。示例索引中的 `a…`、`b…` 是 Schema 测试占位值，**不是可发布的真实哈希**。正式发布时必须用实际签名 APK 的摘要替换，并核对包内清单与索引的 ID、版本、ABI 和许可证。
 
-正式目录位于仓库根目录的 [`docs/language-pack-index.json`](../../language-pack-index.json)，仅列已经上传至 GitHub Release 的 APK；尚未发布时 `packs` 为空。发布前执行 `python tools/verify-static-pack-index.py`，核验 Schema、重复的包 ID/版本、Release URL、能力、工具链大小、兼容条件和最近实测设备。该脚本无法替代 GitHub 附件的下载后哈希复核或 IDE 内的安装验证。
+正式目录位于仓库根目录的 [`docs/language-pack-index.json`](../../language-pack-index.json)，目前列出已发布的 Python 与 C/C++ 包；新包只有上传 GitHub Release 并完成核验后才能加入。执行 `python tools/verify-static-pack-index.py`，核验 Schema、重复的包 ID/版本、Release URL、能力、工具链大小、兼容条件和最近实测设备。该脚本无法替代 GitHub 附件的下载后哈希复核或 IDE 内的安装验证。
 
 ## 构建与验证
 
 ```powershell
 .\build-local.ps1 -Product ide
 .\build-local.ps1 -Product sample
-D:\Anaconda\python.exe .\tools\verify-language-pack.py
+python .\tools\verify-language-pack.py
+python .\tools\verify-language-pack.py --apk <目标APK> --manifest <包清单源码JSON>
 python .\tools\verify-language-pack-device.py --serial <设备序列号> --operate-ui
 ```
 
-验证器脚本需要 `jsonschema>=4`；检查有效/无效示例、实际示例清单与 APK 资源。设备上安装 IDE 与示例包后，在 IDE 扩展图标选择 `org.pocketide.sample.echo` →“验证并启用”，完成 `initialize`、`analyze`、`complete`、`run`、`diagnostics`、`cancel` 与大输出测试。建立 `demo.echo` 写入 `ECHO hello`，运行后应输出 `hello`。`ERROR` 应显示第 1 行位置；`WAIT 5000` 可用于取消。卸载示例包后 IDE 应保留编辑功能，已启用状态撤销。
+静态验证器需要 `jsonschema>=4`；无参数时检查示例包，有 `--apk` 时必须同时给出对应的 `--manifest`，核对 Schema、包内清单与源码 JSON、APK 服务声明及 SDK 源码包。它不会验证原生依赖闭包、许可证义务或设备行为。设备上安装 IDE 与示例包后，在 IDE 扩展图标选择 `org.pocketide.sample.echo` →“验证并启用”，完成 `initialize`、`analyze`、`complete`、`run`、`diagnostics`、`cancel` 与大输出测试。建立 `demo.echo` 写入 `ECHO hello`，运行后应输出 `hello`。`ERROR` 应显示第 1 行位置；`WAIT 5000` 可用于取消。卸载示例包后 IDE 应保留编辑功能，已启用状态撤销。
 
 设备脚本会覆盖安装 IDE、示例包和单独 UID 的权限探针（保留安装数据），操作 IDE 完成逐项验证并禁用示例包；运行前保存编辑器内容。它不会卸载包。`pack-probe` 只用于验证非宿主 UID 被服务拒绝，不是用户功能。卸载及同 APK 重装后的批准撤销已另行在设备上核对，见验证记录。
 
-阶段 3 实机门槛包括包发现、权限拒绝、绑定、取消、包进程崩溃、版本不兼容、卸载恢复、每项声明能力与大输出；本示例在上述设备上已通过。详细错误码见 [ERRORS.md](ERRORS.md)，精确 APK 哈希、未完成的 SDK AAR 打包事项见 [VALIDATION.md](VALIDATION.md)。
+阶段 3 实机门槛包括包发现、权限拒绝、绑定、取消、包进程崩溃、版本不兼容、卸载恢复、每项声明能力与大输出；本示例在上述设备上已通过。详细错误码见 [ERRORS.md](ERRORS.md)，阶段 3 的历史 APK 哈希与当时 AAR 未完成状态见 [VALIDATION.md](VALIDATION.md)；当前可用的 AAR 构建方式见 [SDK README](../../../pack-sdk/README.md)。
